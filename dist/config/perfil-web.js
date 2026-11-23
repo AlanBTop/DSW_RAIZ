@@ -82,7 +82,11 @@
     userCard.lastChild.append(userName, userEmail);
     function setIdentity(name) {
       const display = String(name || '').trim();
-      if (display) { userName.textContent = display; avatar.textContent = display.slice(0, 1).toUpperCase(); }
+      if (display) {
+        userName.textContent = display;
+        avatar.textContent = display.slice(0, 1).toUpperCase();
+        if (role === 'vendedor') subtitle.textContent = 'RAIZ · ' + display;
+      }
     }
     const sectionNav = el('nav', null, 'side-nav raiz-section-nav');
     sectionNav.setAttribute('aria-label', 'Navegação do perfil');
@@ -97,7 +101,8 @@
     const header = el('header', null, 'topbar');
     const headerCopy = el('div');
     const title = el('h2', RaizAccess.labels[role]);
-    const subtitle = el('div', (user.email || '') + ' · ' + (RaizDB.backendLabel || 'Supabase'), 'tiny muted');
+    const subtitles = {cliente:'RAIZ · Marketplace de Plantas',vendedor:'RAIZ · Área do vendedor',entregador:'RAIZ · Logística Botânica',admin:'RAIZ · Governança'};
+    const subtitle = el('div', subtitles[role] + ' · ' + (RaizDB.backendLabel || 'Supabase'), 'tiny muted');
     headerCopy.append(title, subtitle);
     const navigation = el('nav', null, 'top-actions raiz-actions');
     const portal = el('a', 'Portal RAIZ', 'raiz-button');
@@ -377,16 +382,20 @@
     }
 
     async function seller() {
-      const [stores, products, orders, items] = await Promise.all([
+      const [stores, products, orders, items, sales] = await Promise.all([
         query('vendedor_lojas','nome,endereco,horario_funcionamento'),
         query('vendedor_produtos','id,nome,categoria,preco,estoque,ativo,descricao'),
         query('vendedor_pedidos','id,status,total,data_pedido,cliente_nome'),
-        Promise.resolve([])
+        Promise.resolve([]),
+        query('vendedor_vendas_diarias','id,dia_semana,valor,data_referencia')
       ]);
       setIdentity(stores[0]?.nome);
       items.push(...await RaizApi.related(db,'vendedor_itens_pedido','id,pedido_id,produto_nome,quantidade','pedido_id',orders.map(o=>o.id)));
       const overview = section('Visão geral desta página', 'visao', 'Início');
       metrics(overview,[['Pedidos aguardando preparo',orders.filter(o => o.status === 'Pendente').length],['Produtos ativos',products.filter(p => p.ativo).length],['Produtos sem estoque',products.filter(p => p.estoque === 0).length]]);
+      const statistics = section('Estatísticas de vendas', 'estatisticas', 'Estatísticas');
+      metrics(statistics,[['Vendas registradas',money.format(sales.reduce((sum,row)=>sum+Number(row.valor||0),0))],['Registros diários',sales.length]]);
+      list(statistics,sales,row=>card(row.dia_semana,el('p',money.format(row.valor)+' · '+new Date(row.data_referencia+'T12:00:00').toLocaleDateString('pt-BR'))),'Sem registros de vendas neste período.');
       const store = section('Minha loja', 'loja', 'Loja');
       for (const s of stores) store.append(el('p',[s.nome,s.endereco,s.horario_funcionamento].filter(Boolean).join(' · ')));
       for (const s of stores) if(RaizMaps.search(s.endereco)) store.append(mapLink(RaizMaps.search(s.endereco),'Ver loja no Google Maps'));
@@ -426,10 +435,11 @@
     }
 
     async function courier() {
-      const [profiles, offers, trips, history] = await Promise.all([
-        query('entregador_perfil','nome,veiculo,online'),features.versao>=4?rpc('ofertas_pagina',{p_pagina:pages.ofertas||0}):rpc('ofertas'),
+      const [profiles, offers, trips, history, wallet] = await Promise.all([
+        query('entregador_perfil','nome,veiculo,online,saldo_carteira,ganhos_hoje,total_corridas_hoje'),features.versao>=4?rpc('ofertas_pagina',{p_pagina:pages.ofertas||0}):rpc('ofertas'),
         query('entregador_corridas','id,status,etapa_atual,coleta_loja,coleta_endereco,entrega_endereco,item_descricao,fragil,valor'),
-        query('entregador_historico','corrida_id,status,data_formatada')
+        query('entregador_historico','corrida_id,status,data_formatada'),
+        query('entregador_extrato_carteira','id,tipo,descricao,valor,status,data_formatada')
       ]);
       const account = section('Disponibilidade', 'disponibilidade', 'Início');
       const profile = profiles[0];
@@ -440,8 +450,10 @@
       }
       account.append(el('span',profile.online ? 'Online' : 'Offline','raiz-status ' + (profile.online ? 'raiz-positive' : '')),
         el('p',[profile.nome,profile.veiculo].filter(Boolean).join(' · ')),
-        action(profile.online ? 'Ficar offline' : 'Ficar online', () => rpc('disponibilidade',{p_online:!profile.online})),
-        el('p','Carteira, saque e rastreamento indisponíveis.', 'raiz-muted'));
+        action(profile.online ? 'Ficar offline' : 'Ficar online', () => rpc('disponibilidade',{p_online:!profile.online})));
+      const walletSection = section('Carteira', 'carteira');
+      metrics(walletSection,[['Saldo registrado',money.format(profile.saldo_carteira||0)],['Ganhos de hoje',money.format(profile.ganhos_hoje||0)],['Entregas de hoje',String(profile.total_corridas_hoje||0)]]);
+      list(walletSection,wallet,row=>card(row.descricao,el('p',money.format(row.valor)+' · '+row.status+' · '+row.data_formatada)),'Nenhum lançamento na carteira.');
       const step = (p_pedido,p_etapa,p_vaso=false,p_folhagem=false,p_entrega=false) => rpc('etapa',{p_pedido,p_etapa,p_vaso,p_folhagem,p_entrega});
       list(section('Entregas em andamento', 'andamento', 'Entregas'),trips.filter(t => t.status === 'Em andamento'),t => {
         const row = card('#' + t.id + ' · ' + t.item_descricao,
@@ -519,8 +531,8 @@
         await privacy();
         const order = {
           cliente:['catalogo','favoritos','carrinho','pedidos','conta','privacidade'],
-          vendedor:['produtos','pedidos','loja','visao','privacidade'],
-          entregador:['andamento','ofertas','historico','disponibilidade','privacidade'],
+          vendedor:['visao','produtos','pedidos','loja','estatisticas','privacidade'],
+          entregador:['disponibilidade','andamento','ofertas','historico','carteira','privacidade'],
           admin:['visao','usuarios','moderacao','pedidos','entregas','solicitacoes','eventos','privacidade']
         }[role] || [];
         const rank = id => { const index=order.indexOf(id); return index < 0 ? order.length : index; };
@@ -603,6 +615,7 @@
         if (selected) link.setAttribute('aria-current', 'page');
         else link.removeAttribute('aria-current');
       }
+      title.textContent = document.getElementById(current)?.querySelector('h2')?.textContent || RaizAccess.labels[role];
     }
     window.addEventListener('hashchange', syncNavigation);
     window.addEventListener('unhandledrejection',()=>{void RaizApi.event(db,'erro',role);});
