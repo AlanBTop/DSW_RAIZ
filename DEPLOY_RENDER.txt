@@ -24,3 +24,28 @@ exatos de login.html e recuperar-senha.html. Veja docs/OPERACAO.md para as
 dependências existentes de autenticação, e-mail e funções do Supabase.
 Os testes locais de navegador usam respostas simuladas e não comprovam login
 ou operações reais no Supabase remoto.
+
+Configuração realizada em 23/11/2026
+
+Render: https://dsw-raiz.onrender.com
+Supabase: rlftmxxqlfyvfsgjtsdd
+Site URL do Auth: https://dsw-raiz.onrender.com
+Redirect URLs: login.html, recuperar-senha.html e os quatro retornos exatos
+login.html?role=cliente|vendedor|entregador|admin&modo=online (uma URL por perfil).
+O retorno anterior http://localhost:3000 foi mantido na lista permitida.
+RAIZ_WEB_ORIGIN: https://dsw-raiz.onrender.com
+Edge Function processar-exclusao: publicada, com verificação JWT habilitada.
+
+Pendência confirmada por consulta somente de leitura no banco remoto:
+- public.raiz_solicitacoes_privacidade não existe.
+- public.raiz_preparar_exclusao(uuid,uuid) não existe.
+- public.raiz_concluir_exclusao(uuid) não existe.
+public.raiz_acesso() existe.
+
+A configuração de hospedagem está concluída. O processamento administrativo
+de exclusões depende dessas estruturas. A função devolve indisponibilidade
+se a consulta ao banco falhar e exige sessão válida de administrador.
+Não foram executadas migrations, resets ou exclusões de contas.
+Antes de instalar as estruturas pendentes, seguir o diagnóstico, backup e
+ensaio em homologação descritos em docs/OPERACAO.md; não reaplicar a base 001
+em um banco existente nem executar todas as migrations sem comparar o esquema.

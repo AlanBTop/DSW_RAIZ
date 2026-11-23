@@ -23,7 +23,8 @@ Deno.serve(async request => {
   try {protocolo=(await request.json()).protocolo;}catch {return response(400,{erro:'Pedido inválido'});}
   if(!/^[0-9a-f-]{36}$/i.test(protocolo)) return response(400,{erro:'Protocolo inválido'});
   const query=await admin.from('raiz_solicitacoes_privacidade').select('usuario_id,status').eq('id',protocolo).single();
-  if(query.error || !query.data) return response(404,{erro:'Solicitação não encontrada'});
+  if(query.error) return response(503,{erro:'Serviço de exclusão indisponível. Verifique a configuração do banco.'});
+  if(!query.data) return response(404,{erro:'Solicitação não encontrada'});
   if(query.data.status==='Concluída') return response(200,{concluida:true});
   // Se Auth foi excluído antes de uma interrupção, apenas conclui o protocolo.
   if(query.data.usuario_id){
