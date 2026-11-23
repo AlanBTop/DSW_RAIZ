@@ -65,16 +65,49 @@
   async function render(db, active, switchAccount) {
     const { role, user } = active;
     const features = await RaizApi.initialize(db);
-    const main = el('main', null, 'raiz-page raiz-dashboard raiz-' + role);
-    const header = el('header');
-    const title = el('h1', 'RAIZ · ' + RaizAccess.labels[role]);
-    const navigation = el('nav', null, 'raiz-actions');
+    const main = el('div', null, 'app-shell raiz-dashboard raiz-' + role);
+    const sidebar = el('aside', null, 'sidebar');
+    sidebar.setAttribute('aria-label', 'Menu do perfil ' + RaizAccess.labels[role]);
+    const logo = el('a', null, 'logo');
+    logo.href = '../index.html';
+    logo.setAttribute('aria-label', 'RAIZ — voltar ao portal');
+    logo.append(el('span', '🌿', 'logo-mark'), el('span', 'RAIZ ' + RaizAccess.labels[role]));
+    const captions = {cliente:'Seu espaço de cultivo',vendedor:'Espaço do vendedor',entregador:'Logística botânica',admin:'Governança do ecossistema'};
+    const caption = el('p', captions[role], 'sidebar-caption');
+    const userCard = el('div', null, 'user-mini');
+    const avatar = el('div', (user.email || 'R').slice(0, 1).toUpperCase(), 'avatar');
+    const userName = el('strong', user.email || RaizAccess.labels[role]);
+    const userEmail = el('p', user.email || '', 'tiny muted');
+    userCard.append(avatar, el('div', null, 'user-mini-copy'));
+    userCard.lastChild.append(userName, userEmail);
+    function setIdentity(name) {
+      const display = String(name || '').trim();
+      if (display) { userName.textContent = display; avatar.textContent = display.slice(0, 1).toUpperCase(); }
+    }
+    const sectionNav = el('nav', null, 'side-nav raiz-section-nav');
+    sectionNav.setAttribute('aria-label', 'Navegação do perfil');
+    const sidebarFoot = el('div', null, 'sidebar-foot');
+    const hub = el('div', null, 'hub-tag');
+    hub.append(el('span', '🌱'), el('span', role === 'cliente' ? 'Marketplace RAIZ' : 'Painel RAIZ'));
+    const about = el('a', 'Voltar ao portal', 'sidebar-about');
+    about.href = '../index.html';
+    sidebarFoot.append(hub, about);
+    sidebar.append(logo, caption, userCard, sectionNav, sidebarFoot);
+    const workspace = el('main', null, 'main');
+    const header = el('header', null, 'topbar');
+    const headerCopy = el('div');
+    const title = el('h2', RaizAccess.labels[role]);
+    const subtitle = el('div', (user.email || '') + ' · ' + (RaizDB.backendLabel || 'Supabase'), 'tiny muted');
+    headerCopy.append(title, subtitle);
+    const navigation = el('nav', null, 'top-actions raiz-actions');
     const portal = el('a', 'Portal RAIZ', 'raiz-button');
     portal.href = '../index.html';
     const feedback = el('p', '', 'raiz-feedback');
     feedback.setAttribute('role', 'status');
+    const pageContent = el('div', null, 'app-content raiz-app-content');
     const content = el('div', null, 'raiz-content');
     const partnerCopy = {
+      cliente: ['Marketplace de plantas', 'Plantas que transformam seu dia.', 'Encontre espécies, vasos, insumos e ferramentas em lojas especializadas.'],
       vendedor: ['Seu negócio, mais verde', 'Vamos cultivar boas vendas?', 'Cuide da sua vitrine, acompanhe os pedidos e veja sua loja crescer.'],
       entregador: ['Conectando jardins e pessoas', 'Cada entrega, um novo começo.', 'Organize suas rotas, acompanhe as oportunidades e leve mais verde para cada lar.'],
       admin: ['Um ecossistema em crescimento', 'Cuidar de cada detalhe.', 'Acompanhe a operação, os parceiros e o catálogo em um só lugar.']
@@ -96,16 +129,14 @@
       hero.append(copy, photo);
       content.append(hero);
     }
-    const sectionNav = el('nav', null, 'raiz-section-nav');
-    sectionNav.setAttribute('aria-label', 'Seções do perfil');
-    const layout = el('div', null, 'raiz-dashboard-layout');
-    layout.append(sectionNav, content);
     navigation.append(portal, button('Atualizar', () => load()), switchAccount('../login.html?role=' + role + '&modo=online', value => feedback.textContent = value));
     navigation.lastChild.textContent = 'Sair';
-    const identity = el('div');
-    identity.append(title, el('p', user.email, 'raiz-identity'), el('p', RaizDB.backendLabel || 'Supabase', 'raiz-identity'));
-    header.append(identity, navigation);
-    main.append(header, feedback, layout);
+    header.append(headerCopy, navigation);
+    pageContent.append(feedback, content);
+    workspace.append(header, pageContent);
+    const mobileNav = el('nav', null, 'bottom-nav');
+    mobileNav.setAttribute('aria-label', 'Navegação rápida do perfil');
+    main.append(sidebar, workspace, mobileNav);
     document.body.replaceChildren(main);
     document.body.classList.remove('raiz-pending');
 
@@ -149,8 +180,9 @@
       heading.id = id + '-titulo';
       element.setAttribute('aria-labelledby', heading.id);
       element.append(heading);
-      const anchor = el('a', navLabel);
+      const anchor = el('a', navLabel, 'nav-btn');
       anchor.href = '#' + id;
+      anchor.dataset.section = id;
       sectionNav.append(anchor);
       content.append(element);
       return element;
@@ -200,9 +232,21 @@
         query('cliente_pedidos','id,data_formatada,status,total,frete,forma_pagamento,avaliacao_nota,avaliacao_comentario'+(features.recebimento?',recebimento_confirmado_em':'')),
         Promise.resolve([])
       ]);
+      setIdentity(profile[0]?.nome);
       items.push(...await RaizApi.related(db,'cliente_itens_pedido','id,pedido_id,produto_nome,quantidade,preco_unitario','pedido_id',orders.map(o=>o.id)));
       const cartProducts=await RaizApi.related(db,'cliente_produtos','id,nome,preco,estoque,loja_id','id',cart.map(i=>i.produto_id));
-      const catalog = section('Catálogo', 'catalogo');
+      const catalog = section('Catálogo', 'catalogo', 'Buscar');
+      const favoritesShortcut = el('a', 'Favoritos', 'nav-btn');
+      favoritesShortcut.href = '#catalogo';
+      favoritesShortcut.dataset.section = 'favoritos';
+      favoritesShortcut.onclick = event => {
+        event.preventDefault();
+        catalogState.favorites = true;
+        pages.catalog = 0;
+        if (location.hash !== '#catalogo') location.hash = 'catalogo';
+        load();
+      };
+      sectionNav.append(favoritesShortcut);
       if(catalogOffline) catalog.append(el('p','Sem conexão: catálogo salvo por até 24 horas. Preço e estoque serão conferidos quando a conexão voltar.','raiz-notice'));
       const [searchLabel, search] = field('Buscar produto','search', catalogState.search);
       search.placeholder = 'Nome ou loja';
@@ -305,7 +349,7 @@
         }
         return row;
       },'Você ainda não tem pedidos.');
-      const address = section('Minha conta e endereço', 'conta', 'Conta');
+      const address = section('Minha conta e endereço', 'conta', 'Perfil');
       if (profile.length) address.append(el('p',[profile[0].nome,profile[0].telefone].filter(Boolean).join(' · ')));
       if (profile[0]?.endereco && RaizMaps.search(profile[0].endereco)) address.append(mapLink(RaizMaps.search(profile[0].endereco),'Ver endereço no Google Maps'));
       const [addressLabel, addressInput] = field('Endereço completo','text',profile[0]?.endereco);
@@ -339,17 +383,18 @@
         query('vendedor_pedidos','id,status,total,data_pedido,cliente_nome'),
         Promise.resolve([])
       ]);
+      setIdentity(stores[0]?.nome);
       items.push(...await RaizApi.related(db,'vendedor_itens_pedido','id,pedido_id,produto_nome,quantidade','pedido_id',orders.map(o=>o.id)));
-      const overview = section('Visão geral desta página', 'visao');
+      const overview = section('Visão geral desta página', 'visao', 'Início');
       metrics(overview,[['Pedidos aguardando preparo',orders.filter(o => o.status === 'Pendente').length],['Produtos ativos',products.filter(p => p.ativo).length],['Produtos sem estoque',products.filter(p => p.estoque === 0).length]]);
-      const store = section('Minha loja', 'loja');
+      const store = section('Minha loja', 'loja', 'Loja');
       for (const s of stores) store.append(el('p',[s.nome,s.endereco,s.horario_funcionamento].filter(Boolean).join(' · ')));
       for (const s of stores) if(RaizMaps.search(s.endereco)) store.append(mapLink(RaizMaps.search(s.endereco),'Ver loja no Google Maps'));
       if (!stores.length) {
         store.append(el('p','A equipe responsável precisa vincular sua conta a uma loja.'));
         return;
       }
-      const inventory = section('Produtos', 'produtos');
+      const inventory = section('Produtos', 'produtos', 'Produtos');
       const newProduct = el('details');
       newProduct.className = 'raiz-create';
       newProduct.append(el('summary','Cadastrar produto','raiz-button'),productForm());
@@ -386,8 +431,9 @@
         query('entregador_corridas','id,status,etapa_atual,coleta_loja,coleta_endereco,entrega_endereco,item_descricao,fragil,valor'),
         query('entregador_historico','corrida_id,status,data_formatada')
       ]);
-      const account = section('Disponibilidade', 'disponibilidade');
+      const account = section('Disponibilidade', 'disponibilidade', 'Início');
       const profile = profiles[0];
+      setIdentity(profile?.nome);
       if (!profile) {
         account.append(el('p','A equipe responsável precisa vincular seu perfil de entregador.'));
         return;
@@ -397,7 +443,7 @@
         action(profile.online ? 'Ficar offline' : 'Ficar online', () => rpc('disponibilidade',{p_online:!profile.online})),
         el('p','Carteira, saque e rastreamento indisponíveis.', 'raiz-muted'));
       const step = (p_pedido,p_etapa,p_vaso=false,p_folhagem=false,p_entrega=false) => rpc('etapa',{p_pedido,p_etapa,p_vaso,p_folhagem,p_entrega});
-      list(section('Entregas em andamento', 'andamento', 'Em andamento'),trips.filter(t => t.status === 'Em andamento'),t => {
+      list(section('Entregas em andamento', 'andamento', 'Entregas'),trips.filter(t => t.status === 'Em andamento'),t => {
         const row = card('#' + t.id + ' · ' + t.item_descricao,
           el('span',t.etapa_atual === 1 ? 'Próximo passo: coleta' : 'Próximo passo: entrega','raiz-status raiz-positive'),
           el('p','Coleta · ' + t.coleta_loja + ' · ' + t.coleta_endereco, 'raiz-route-stop'),
@@ -418,7 +464,7 @@
         return row;
       },'Nenhuma entrega em andamento.');
       if(features.versao>=4) totals.ofertas=offers.total;
-      list(section('Entregas disponíveis', 'ofertas', 'Ofertas'),features.versao>=4?offers.itens:offers,o => card('#' + o.id + ' · ' + o.coleta_loja,
+      list(section('Entregas disponíveis', 'ofertas', 'Oportunidades'),features.versao>=4?offers.itens:offers,o => card('#' + o.id + ' · ' + o.coleta_loja,
         el('p',o.item_descricao + (o.fragil ? ' · Frágil' : '') + ' · ' + money.format(o.valor)),
         action('Aceitar entrega', () => step(o.id,1))),profile.online ? 'Nenhuma entrega disponível.' : 'Fique online para consultar as ofertas.');
       list(section('Histórico', 'historico'),history,t => card('#' + t.corrida_id + ' · ' + t.status,el('p',t.data_formatada)),'Nenhuma entrega concluída.');
@@ -431,8 +477,9 @@
         query('cliente_produtos','id,nome,vendedor_nome,ativo')
       ]);
       const users=features.versao>=4?userResult.itens:userResult;
+      setIdentity(users.find(u=>u.id===user.id)?.email || RaizAccess.labels.admin);
       if(features.versao>=4) totals.usuarios=userResult.total;
-      const summary = section('Visão geral desta página', 'visao');
+      const summary = section('Visão geral desta página', 'visao', 'Dashboard');
       metrics(summary,[['Contas exibidas',users.length],['Pedidos exibidos',orders.length],['Entregas exibidas',trips.length],
         ['GMV dos pedidos exibidos',money.format(orders.filter(o => !/^Cancelad/.test(o.status)).reduce((sum,o) => sum+Number(o.total || 0),0))],
         ['Pedidos entregues exibidos',orders.filter(o => o.status === 'Entregue').length]]);
@@ -451,7 +498,7 @@
       search.onkeydown=e=>{if(e.key==='Enter'){adminSearch=search.value;pages.usuarios=0;load();}};
       people.append(button('Buscar',()=>{adminSearch=search.value;pages.usuarios=0;load();}));
       filter();
-      list(section('Moderação de produtos', 'moderacao', 'Moderação'),products,p => {
+      list(section('Moderação de produtos', 'moderacao', 'Catálogo'),products,p => {
         const row = card(p.nome,el('p',p.vendedor_nome + (p.ativo ? ' · ativo' : ' · inativo')));
         if (p.ativo) row.append(action('Desativar produto', () => rpc('moderar_produto',{p_produto:p.id})));
         return row;
@@ -470,6 +517,23 @@
         welcome();
         await ({cliente:customer,vendedor:seller,entregador:courier,admin})[role]();
         await privacy();
+        const order = {
+          cliente:['catalogo','favoritos','carrinho','pedidos','conta','privacidade'],
+          vendedor:['produtos','pedidos','loja','visao','privacidade'],
+          entregador:['andamento','ofertas','historico','disponibilidade','privacidade'],
+          admin:['visao','usuarios','moderacao','pedidos','entregas','solicitacoes','eventos','privacidade']
+        }[role] || [];
+        const rank = id => { const index=order.indexOf(id); return index < 0 ? order.length : index; };
+        [...sectionNav.children]
+          .sort((a,b)=>rank(a.dataset.section)-rank(b.dataset.section))
+          .forEach(link=>sectionNav.append(link));
+        mobileNav.replaceChildren(...[...sectionNav.querySelectorAll('a')].map(item => {
+          const link = el('a', item.textContent, 'nav-btn');
+          link.href = item.href;
+          link.dataset.section = item.dataset.section;
+          return link;
+        }));
+        syncNavigation();
         for(const [view,total] of Object.entries(totals)){
           const id=paged[view] || (view==='ofertas'?'ofertas':view==='usuarios'?'usuarios':null);
           const parent=id && document.getElementById(id);if(parent)pager(parent,view,total);
@@ -530,6 +594,17 @@
       }
     }
     await load();
+    function syncNavigation() {
+      const current = role === 'cliente' && location.hash === '#catalogo' && catalogState.favorites
+        ? 'favoritos' : location.hash.slice(1) || sectionNav.querySelector('a')?.dataset.section;
+      for (const link of [...sectionNav.querySelectorAll('a'), ...mobileNav.querySelectorAll('a')]) {
+        const selected = link.dataset.section === current;
+        link.classList.toggle('active', selected);
+        if (selected) link.setAttribute('aria-current', 'page');
+        else link.removeAttribute('aria-current');
+      }
+    }
+    window.addEventListener('hashchange', syncNavigation);
     window.addEventListener('unhandledrejection',()=>{void RaizApi.event(db,'erro',role);});
     window.addEventListener('error',()=>{void RaizApi.event(db,'erro',role);});
   }
