@@ -203,7 +203,7 @@ function renderPage() {
             <button class="btn btn-outline" onclick="go('products')">Gerenciar produtos</button>
           </div>
         </div>
-        <img src="../assets/vitrine-botanica.webp" alt="Composição ilustrativa de plantas em vasos" width="720" height="640">
+        <img src="../assets/vitrine-botanica.png" alt="Composição ilustrativa de plantas em vasos" width="720" height="640">
       </section>
 
       <div class="grid-4">
@@ -738,7 +738,7 @@ function saveStoreInfo() {
 }
 
 function sellerPaymentPanel() {
-  if(RaizPresentation.source!=='local') return '<section class="card payment-settings"><h3>Pagamentos</h3><p>Preferências disponíveis somente nos exemplos locais. Nenhuma cobrança é processada.</p></section>';
+  if(RaizPresentation.source==='real') return '<section class="card payment-settings"><h3>Pagamentos</h3><p>Consulta somente leitura.</p></section>';
   const accepted=RaizPayments.accepted();
   return `<section class="card payment-settings"><h3>Formas de pagamento aceitas na apresentação</h3>
     <p class="payment-notice">Preferências da loja de exemplo neste navegador. Afetam o checkout de demonstração, não habilitam uma adquirente nem cobranças reais.</p>

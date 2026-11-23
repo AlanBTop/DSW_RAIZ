@@ -14,5 +14,5 @@ if name!='production':
     prod=json.loads((ROOT/'environments/production.public.json').read_text(encoding='utf-8'))
     if url==prod['supabaseUrl']:raise SystemExit('Use um projeto distinto do de produção')
 output={'mode':'online','localOnly':False,'allowPresentation':False,'allowLocalAdapter':False,'googleOAuth':data.get('googleOAuth') is True,**data}
-(ROOT/'dist/config/environment.js').write_text('// Configuração pública gerada; nunca inclua segredos.\nwindow.RaizEnvironment=Object.freeze('+json.dumps(output,ensure_ascii=False,indent=2)+');\n',encoding='utf-8')
+(ROOT/'dist/config/environment.js').write_text('// Configuração pública gerada; nunca inclua segredos.\nwindow.RaizEnvironment=Object.freeze('+json.dumps(output,ensure_ascii=False,indent=2)+');\n',encoding='utf-8',newline='\n')
 print('Configuração pública gerada para '+name)

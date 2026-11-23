@@ -1,0 +1,9 @@
+{
+  "name": "RAIZ — Painel Administrativo (UA)",
+  "short_name": "RAIZ Admin",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#F8FAF8",
+  "theme_color": "#1B4332",
+  "description": "Painel de Governança, Dashboard Persistido e Segurança RBAC do RAIZ Marketplace."
+}

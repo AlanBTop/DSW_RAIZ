@@ -223,7 +223,7 @@ function computeKPIs() {
   const logs = state.securityLogs;
 
   const ordersSum = orders.filter(o => o.status !== 'Cancelado').reduce((acc, o) => acc + Number(o.total || 0), 0);
-  const gmvTotal = RaizPresentation.source==='local' && RaizPaymentFlow.summary().count ? RaizPaymentFlow.summary().paidCents/100 : ordersSum;
+  const gmvTotal = ['local','apresentacao'].includes(RaizPresentation.source) && RaizPaymentFlow.summary().count ? RaizPaymentFlow.summary().paidCents/100 : ordersSum;
   const deliveredCount = orders.filter(o => o.status === 'Entregue').length;
   const activeProducts = products.filter(p => p.active !== false && p.ativo !== false).length;
   const pausedProducts = products.length - activeProducts;
@@ -349,7 +349,7 @@ function renderPage() {
           <button class="btn btn-outline" onclick="go('security')">Auditoria RBAC (${kpis.blockedEvents} bloqueios)</button>
         </div>
         </div>
-        <img src="../assets/vitrine-botanica.webp" alt="Composição ilustrativa do universo botânico RAIZ" width="720" height="640">
+        <img src="../assets/vitrine-botanica.png" alt="Composição ilustrativa do universo botânico RAIZ" width="720" height="640">
       </section>
 
       <div class="grid-4" style="margin-top:20px">
@@ -479,7 +479,7 @@ function renderPage() {
         </div>
       </div>
     `;
-    if(RaizPresentation.source==='local') c.insertAdjacentHTML('beforeend',RaizPaymentFlow.panel());
+    if(['local','apresentacao'].includes(RaizPresentation.source)) c.insertAdjacentHTML('beforeend',RaizPaymentFlow.panel());
     return;
   }
 

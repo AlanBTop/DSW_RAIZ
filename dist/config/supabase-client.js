@@ -5,6 +5,7 @@
 
 (function (window) {
   const environment = window.RaizEnvironment || {};
+  const configBase = new URL('.', document.currentScript.src);
   const sdkUrl = new URL('vendor/supabase-2.119.2.js',document.currentScript.src).href;
   const loopback = ['127.0.0.1', 'localhost', '[::1]'].includes(window.location.hostname);
   const presentationAllowed = environment.allowPresentation === true &&
@@ -21,6 +22,7 @@
   try { const ref=new URL(config.url).hostname.split('.')[0];localStorage.removeItem('sb-'+ref+'-auth-token'); } catch(_) {}
 
   let supabaseClient = null;
+  let localClient = null;
 
   async function timedFetch(input, init={}) {
     const controller=new AbortController();
@@ -83,6 +85,7 @@
   }
 
   function getClient() {
+    if (localClient) return localClient;
     if (!isConfigured()) return null;
     if (supabaseClient) return supabaseClient;
 
@@ -135,8 +138,8 @@
 
   window.RaizDB = {
     config, isDemo: demo, presentationAllowed, isConfigured, getClient, renderDbStatusUI, renderAuthTopbar,
-    get isLocal() { return false; },
-    get backendLabel() { return 'Supabase'; },
+    get isLocal() { return Boolean(localClient); },
+    get backendLabel() { return localClient ? 'PostgreSQL local autenticado' : 'Supabase'; },
     auth: { getCurrentUser, signOut },
     cliente: { getProdutos: getClienteProdutos },
   };
@@ -270,6 +273,21 @@
     // A apresentação local independe do SDK externo e nunca envia seus exemplos.
     const source = new URLSearchParams(location.search).get('fonte') || localStorage.getItem('raiz_fonte') || 'local';
     if (demo && source === 'local') return null;
+    if (!demo && loopback && environment.allowLocalAdapter === true) {
+      try {
+        const response = await fetch('/_local/info', {cache:'no-store'});
+        if (response.ok && (await response.json()).local === true) {
+          await new Promise((resolve,reject) => {
+            const script=document.createElement('script');
+            script.src=new URL('local-client.js',configBase).href;
+            script.onload=resolve; script.onerror=reject; document.head.append(script);
+          });
+          localClient=window.RaizLocal.createClient();
+          return localClient;
+        }
+      } catch (_) { /* O servidor estático continua usando o Supabase original. */ }
+    }
+
     if (!isConfigured()) return null;
     if (window.supabase) return getClient();
     return new Promise(resolve => {

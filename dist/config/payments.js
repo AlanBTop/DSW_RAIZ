@@ -7,13 +7,14 @@
   const currentMonth=()=>{const now=new Date();return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;};
   const escape=value=>String(value ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
   function read() {
+    if(window.RaizPresentation?.source==='apresentacao')return RaizPresentation.get('payment_preferences',{});
     try {const v=JSON.parse(localStorage.getItem(KEY)); return v && !Array.isArray(v) && typeof v==='object'?v:{};}
     catch (_) {return {};}
   }
   function writable() {
-    if(!window.RaizDB?.isDemo || window.RaizPresentation?.source!=='local') throw new Error('Cadastros de pagamento disponíveis somente nos exemplos locais. Nenhum dado financeiro é enviado ao Supabase.');
+    if(!window.RaizDB?.isDemo || !['local','apresentacao'].includes(window.RaizPresentation?.source)) throw new Error('Use os exemplos locais ou a apresentação Supabase para cadastrar preferências fictícias.');
   }
-  function write(data) {writable(); localStorage.setItem(KEY,JSON.stringify(data));}
+  function write(data) {writable(); if(RaizPresentation.source==='apresentacao')RaizPresentation.set('payment_preferences',data);else localStorage.setItem(KEY,JSON.stringify(data));}
   function methods() {const data=read(); return Array.isArray(data.methods)?data.methods.filter(m=>m && validType(m.type) && uuid(m.id)):[];}
   function label(method) {
     return method.last4 ? `${TYPES[method.type]} · ${method.brand} final ${method.last4}` : TYPES[method.type] || '';

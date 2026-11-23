@@ -10,7 +10,10 @@ Build Command: python3 scripts/build_render.py
 Publish Directory: dist
 SKIP_INSTALL_DEPS=true
 
-O build gera somente a configuração pública de produção e verifica os arquivos.
+O build copia web/ para dist/, gera a configuração pública de produção,
+verifica os arquivos e grava dist/release.json para comparação por SHA-256.
+As fontes locais e a publicação são reconciliadas por scripts/sync_local.py.
+Consulte docs/EMPARELHAMENTO.md para o procedimento atual.
 Não executa migrations, não cria outro banco e não altera dados do Supabase.
 Não configure rewrite global para index.html: o site contém várias páginas e
 precisa devolver 404 para endereços inexistentes.

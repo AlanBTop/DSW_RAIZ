@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAIZ — App do Entregador</title>
+  <meta name="description" content="Aplicativo de entregas para entregadores parceiros do marketplace RAIZ." />
+  <meta name="theme-color" content="#1B4332" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="../config/raiz-web.css">
+  <link rel="stylesheet" href="../config/commerce.css">
+  <link rel="stylesheet" href="../config/partner-design.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/config/legal.css">
+</head>
+<body class="raiz-pending">
+  <!-- Conteúdo Principal do Aplicativo -->
+  <div id="appView"></div>
+
+  <!-- Overlay para Modais -->
+  <div id="overlay" class="overlay" onclick="closeModal()"></div>
+
+  <!-- Modal Genérico (Detalhes da Corrida, Coleta, Entrega) -->
+  <div id="modal" class="modal" onclick="modalBackdrop(event)"></div>
+
+  <!-- Notificação Toast -->
+  <div id="toast" class="toast"></div>
+
+  <!-- Scripts de Banco de Dados PostgreSQL Online (Supabase), API REST e Aplicação -->
+  <script src="../config/environment.js"></script>
+  <script src="../config/supabase-client.js"></script>
+  <script src="../config/maps.js"></script>
+  <script src="../config/payments.js"></script>
+  <script src="../config/presentation-data.js"></script>
+  <script src="../config/payment-flow.js"></script>
+  <script src="../config/partner-design.js"></script>
+  <script src="../config/web-access.js"></script>
+  <script src="../config/api-web.js"></script>
+  <script src="../config/perfil-web.js"></script>
+  <script>RaizAccess.open('entregador');</script>
+</body>
+</html>

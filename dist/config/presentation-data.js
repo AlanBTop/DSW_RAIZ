@@ -14,6 +14,9 @@
   let queue = Promise.resolve();
   let feedback;
   let dirty = false;
+  let transactionActive=false;
+  let transactionChanged=false;
+  let revision=0;
   const prefix = source === 'local' ? 'raiz_local_' : 'raiz_demo_';
   const LOCAL_STATE='raiz_local_state_v2';
   function localSnapshot() {
@@ -31,6 +34,12 @@
     return data;
   }
   function commitLocal(patch) {
+    if(source==='apresentacao') {
+      if(!connected)throw new Error('Conecte a apresentação ao Supabase antes de salvar pagamentos.');
+      if(transactionActive) {values={...values,...structuredClone(patch)};transactionChanged=true;return structuredClone(values);}
+      for(const [key,value] of Object.entries(patch))set(key,value);
+      return structuredClone(values);
+    }
     if(source!=='local') throw new Error('Este pagamento funciona somente nos exemplos locais, sem banco.');
     const next={...localSnapshot(),...structuredClone(patch)};
     // Uma única escrita mantém pedido, estoque e pagamento na mesma fotografia local.
@@ -49,7 +58,7 @@
     body.p_sessao = session;
     const { config } = RaizDB;
     const response = await fetch(config.url + '/rest/v1/rpc/' + name, {
-      method: 'POST', keepalive: true,
+      method: 'POST', signal:AbortSignal.timeout(20000),
       headers: { apikey: config.anonKey, 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
@@ -57,6 +66,27 @@
     const result = content ? JSON.parse(content) : null;
     if (!response.ok) throw new Error(result?.message || 'HTTP ' + response.status);
     return result;
+  }
+
+  async function atomic(task) {
+    if(source==='local')return task();
+    if(source!=='apresentacao' || !connected)throw new Error('Apresentação Supabase indisponível. Atualize a conexão.');
+    await queue;
+    if(dirty)throw new Error('Há alterações sem sincronizar. Tente sincronizar antes do pagamento.');
+    const latest=await rpc('raiz_apresentacao_ler',{p_fonte:'apresentacao'});
+    revision=latest.__version;delete latest.__version;values=latest;
+    const before=structuredClone(values);
+    transactionActive=true;transactionChanged=false;
+    try {
+      const result=task();
+      if(transactionChanged) {
+        status('Salvando pedido, estoque e pagamento no Supabase…');
+        revision=await rpc('raiz_apresentacao_confirmar',{p_versao:revision,p_estado:values});
+        status('Apresentação salva no Supabase.');
+      }
+      return result;
+    } catch(error) {values=before;status('Pagamento não salvo: '+error.message);throw error;}
+    finally {transactionActive=false;transactionChanged=false;}
   }
 
   async function init(banner) {
@@ -104,7 +134,7 @@
     try {
       const data = await rpc('raiz_apresentacao_ler', { p_fonte: source });
       if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Resposta inválida.');
-      values = data;
+      revision=data.__version || 0;delete data.__version;values = data;
       connected = true;
       status(source === 'real' ? 'Supabase conectado • consulta real com dados pessoais ocultos.' : 'Supabase conectado • alterações salvas na apresentação.');
     } catch (error) {
@@ -139,7 +169,7 @@
     if(source==='local') {const latest=localSnapshot(); return structuredClone(Object.hasOwn(latest,key)?latest[key]:fallback);}
     if (Object.hasOwn(values, key)) return structuredClone(values[key]);
     if (source === 'real') return structuredClone(fallback);
-    if (connected) set(key, fallback);
+    if (connected && !transactionActive) set(key, fallback);
     return structuredClone(fallback);
   }
 
@@ -154,10 +184,11 @@
     dirty = true;
     status('Salvando no Supabase…');
     queue = queue.then(async () => {
-      for (const [name, item] of [...pending]) {
+      const batch=[...pending];
+      if(batch.length) {
         try {
-          await rpc('raiz_apresentacao_salvar', { p_chave: name, p_valor: item });
-          if (JSON.stringify(pending.get(name)) === JSON.stringify(item)) pending.delete(name);
+          await rpc('raiz_apresentacao_atualizar', {p_patch:Object.fromEntries(batch)});
+          for(const [name,item] of batch)if (JSON.stringify(pending.get(name)) === JSON.stringify(item)) pending.delete(name);
         } catch (error) {
           status('Falha ao salvar no Supabase. Use “Tentar sincronizar”.');
           return;
@@ -189,5 +220,5 @@
     await queue;
     if (!dirty) location.href = url.href;
   });
-  window.RaizPresentation = { init, get, set, commitLocal, guardActions, get source() { return source; }, get connected() { return connected; }, flush: () => queue };
+  window.RaizPresentation = { init, get, set, commitLocal, atomic, guardActions, get source() { return source; }, get connected() { return connected; }, flush: () => queue };
 })();

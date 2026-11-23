@@ -2,6 +2,8 @@
 
 # RAIZ Web
 
+Fonte compartilhada em `web/`, pacote gerado em `dist/` e deploy automático da branch `main` no [Render](https://dsw-raiz.onrender.com). Para atualizar a partir da cópia local e conferir os arquivos publicados, siga [EMPARELHAMENTO.md](docs/EMPARELHAMENTO.md).
+
 Versão web autenticada para cliente, vendedor, entregador e administrador. Backend compartilhado em Supabase; os aplicativos mobile podem usar o mesmo contrato sem um segundo backend.
 
 1. Leia [o guia de operação](docs/OPERACAO.md).
@@ -10,7 +12,7 @@ Versão web autenticada para cliente, vendedor, entregador e administrador. Back
 4. Antes de usar as novas operações, aplique as migrations corretas ao ambiente e publique a função de exclusão, conforme o guia.
 5. Para mobile, comece por [MOBILE.md](docs/MOBILE.md).
 
-O site não processa cobranças. Frete fixo de R$ 15 por pedido, um pedido por loja. Não existe integração bancária ou estorno financeiro nesta versão.
+O site não processa cobranças. Os pagamentos acadêmicos simulam Pix, boleto, crédito (até 3 parcelas), débito e estorno, sem movimentação financeira. No acesso autenticado, frete fixo de R$ 15 por pedido, um pedido por loja.
 
 Contato: suporteraiz.mkt@hotmail.com. Equipe: Alan Botelho Magalhães, Emanuel Faria de Souza, Yuri Sardinha Milani, Gabriel Oliveira Neves, Vitor Jesus Gama da Silva e André Soares Barros.
 

@@ -1,0 +1,17 @@
+.raiz-route-panel {padding:20px;border:1px solid #c7dfd0;background:#f3faf5;border-radius:18px;overflow-wrap:anywhere}
+.raiz-route-panel h3 {margin-top:0}
+.raiz-route-actions {display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.raiz-route-actions a {text-decoration:none;text-align:center}
+.payment-settings {margin-top:20px;overflow-wrap:anywhere}
+.payment-settings .field {display:block;margin:12px 0}
+.payment-settings select,.payment-settings input {max-width:100%;box-sizing:border-box}
+.payment-settings .input,#withdrawAmount {display:block;width:100%;min-height:44px;padding:11px 12px;margin-top:7px;border:1px solid #b9d2c2;border-radius:10px;background:#fff;color:#183b2c;font:inherit;box-sizing:border-box}
+.payment-settings .input:focus,#withdrawAmount:focus {outline:2px solid #52b788;outline-offset:2px}
+.payment-notice {padding:12px;border:1px solid #e2c684;border-radius:12px;background:#fff9e8;color:#664d10;font-size:13px;line-height:1.5}
+.payment-list {display:grid;gap:12px;margin:14px 0}
+.payment-option {display:flex;align-items:center;gap:10px;padding:12px;border:1px solid #c7dfd0;border-radius:12px;cursor:pointer}
+.payment-option input {flex:0 0 auto}
+.payment-card-fields[hidden] {display:none!important}
+.payment-reference {display:block;width:100%;box-sizing:border-box;padding:12px;margin:8px 0;border:1px solid #b9d2c2;border-radius:10px;font:inherit}
+#checkoutInstallments,#retryInstallments,#retryPaymentMethod {display:block;width:100%;box-sizing:border-box;min-height:44px;margin:10px 0;padding:10px;border:1px solid #b9d2c2;border-radius:10px;background:#fff;font:inherit}
+@media(max-width:600px){.raiz-route-actions>*{flex:1 1 100%}.raiz-route-panel {padding:14px}.payment-settings .grid-2 {grid-template-columns:1fr}}

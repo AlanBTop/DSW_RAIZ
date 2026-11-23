@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login & Acesso Seguro — RAIZ Marketplace</title>
+  <meta name="description" content="Acesse sua conta no ecossistema RAIZ com segurança como Cliente, Vendedor ou Entregador." />
+  <meta name="theme-color" content="#1B4332" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --primary: #1B4332;
+      --primary-hover: #143526;
+      --primary-light: #2D6A4F;
+      --accent: #52B788;
+      --accent-soft: #D8F3DC;
+      --terracotta: #C85A32;
+      --bg: #F4F6F4;
+      --surface: #FFFFFF;
+      --text: #1A261E;
+      --muted: #5C6F63;
+      --border: #DDE5E0;
+      --danger: #E53E3E;
+      --warning: #DD6B20;
+      --success: #38A169;
+      --radius: 20px;
+      --shadow: 0 12px 36px rgba(27, 67, 50, 0.08);
+      --font-body: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-display: 'Playfair Display', serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(82, 183, 136, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(200, 90, 50, 0.08) 0%, transparent 40%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 530px;
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      padding: 34px 30px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .top-leaf-decor {
+      position: absolute;
+      top: -30px;
+      right: -30px;
+      width: 120px;
+      height: 120px;
+      background: var(--accent-soft);
+      border-radius: 50%;
+      opacity: 0.6;
+      pointer-events: none;
+      filter: blur(20px);
+    }
+
+    .brand-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .logo-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 58px;
+      height: 58px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #1B4332, #2D6A4F);
+      color: #fff;
+      font-size: 26px;
+      margin-bottom: 10px;
+      box-shadow: 0 8px 18px rgba(27, 67, 50, 0.2);
+    }
+
+    .brand-title {
+      font-family: var(--font-display);
+      font-size: 1.85rem;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+
+    .brand-subtitle {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    /* Alerta de erro de OAuth da URL */
+    .oauth-alert {
+      display: none;
+      background: #FFF5F5;
+      border: 1px solid #FEB2B2;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 20px;
+      font-size: 0.85rem;
+      color: #9B2C2C;
+      line-height: 1.45;
+    }
+
+    .oauth-alert strong {
+      display: block;
+      margin-bottom: 4px;
+      color: #C53030;
+      font-size: 0.9rem;
+    }
+
+    /* Seletor de Perfis (Roles) */
+    .role-section-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .role-selector {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 480px) {
+      .role-selector {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .role-card {
+      border: 2px solid var(--border);
+      background: #FAFCFA;
+      border-radius: 14px;
+      padding: 10px 6px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .role-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .role-card.active {
+      border-color: var(--primary);
+      background: var(--accent-soft);
+      box-shadow: 0 4px 12px rgba(27, 67, 50, 0.12);
+    }
+
+    .role-icon {
+      font-size: 1.5rem;
+    }
+
+    .role-title {
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .role-desc {
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    /* Botão Google */
+    .btn-google {
+      width: 100%;
+      background: #FFFFFF;
+      border: 1px solid #DADCE0;
+      border-radius: 12px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #3C4043;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      transition: all 0.2s ease;
+    }
+
+    .btn-google:hover {
+      background: #F8F9FA;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+      border-color: #D2E3FC;
+    }
+
+    .google-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    /* Divisor */
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 20px 0;
+      color: #8C9E92;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .divider::before, .divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .divider span {
+      padding: 0 12px;
+    }
+
+    /* Formulário */
+    .form-group {
+      margin-bottom: 14px;
+      position: relative;
+    }
+
+    .form-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.92rem;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.2s ease;
+      background: #FFF;
+    }
+
+    .form-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(82, 183, 136, 0.15);
+    }
+
+    .form-input.is-invalid {
+      border-color: var(--danger) !important;
+      background-color: #FFF9F9;
+    }
+
+    .form-input.is-valid {
+      border-color: var(--success) !important;
+    }
+
+    .btn-toggle-eye {
+      position: absolute;
+      right: 12px;
+      background: transparent;
+      border: 0;
+      cursor: pointer;
+      font-size: 16px;
+      color: #718096;
+      padding: 4px;
+    }
+
+    .field-hint {
+      font-size: 0.74rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .field-error {
+      font-size: 0.78rem;
+      color: var(--danger);
+      font-weight: 600;
+      margin-top: 4px;
+      display: none;
+    }
+
+    /* Medidor de Força de Senha */
+    .strength-meter {
+      margin-top: 8px;
+    }
+
+    .strength-bars {
+      display: flex;
+      gap: 4px;
+      height: 6px;
+      margin-bottom: 6px;
+    }
+
+    .strength-bar-seg {
+      flex: 1;
+      height: 100%;
+      background: #E2E8F0;
+      border-radius: 3px;
+      transition: background 0.3s ease;
+    }
+
+    .strength-label {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* Checklist de Requisitos de Senha */
+    .pass-checklist {
+      background: #F7FAF8;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-top: 8px;
+      font-size: 0.75rem;
+      display: grid;
+      gap: 5px;
+    }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #718096;
+      transition: color 0.2s;
+    }
+
+    .check-item.valid {
+      color: #2F855A;
+      font-weight: 600;
+    }
+
+    .check-icon {
+      font-size: 11px;
+    }
+
+    .btn-submit {
+      width: 100%;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 13px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(27, 67, 50, 0.2);
+      transition: all 0.2s ease;
+      margin-top: 8px;
+    }
+
+    .btn-submit:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-submit:disabled {
+      background: #A0AEC0;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Alternador de Modo (Login / Cadastro) */
+    .mode-toggle {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 0.86rem;
+      color: var(--muted);
+    }
+
+    .mode-toggle a {
+      color: var(--primary);
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .mode-toggle a:hover {
+      text-decoration: underline;
+    }
+
+    /* Atalhos Rápidos Demo */
+    .demo-box {
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px dashed var(--border);
+    }
+
+    .demo-title {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .demo-chips {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    @media (max-width: 480px) {
+      .demo-chips {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .demo-chip {
+      background: #F0F4F1;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 6px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--primary);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .demo-chip:hover {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+    }
+
+    .footer-links {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 0.85rem;
+    }
+
+    .footer-links a {
+      color: var(--muted);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .footer-links a:hover {
+      color: var(--primary);
+    }
+
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #1B4332;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      z-index: 10000;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: all 0.3s ease;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+  <link rel="stylesheet" href="config/raiz-web.css">
+  <link rel="stylesheet" href="config/login-web.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/config/legal.css">
+</head>
+<body>
+
+  <main class="login-container">
+    <aside class="login-side" aria-label="Escolha de perfil">
+
+    <div class="brand-header">
+      <div class="logo-badge">🌿</div>
+      <h1 class="brand-title">RAIZ Marketplace</h1>
+      <p class="brand-subtitle" id="portalSub">Plantas, jardinagem e quem cuida de tudo isso.</p>
+    </div>
+
+    <!-- Seletor de Perfil / Papel (Role) -->
+    <div class="role-section-label">
+      <span>Como você deseja entrar?</span>
+      <span id="roleBadge" style="color:var(--primary);font-weight:800">🪴 Cliente</span>
+    </div>
+
+    <div class="role-selector">
+      <button type="button" class="role-card active" aria-pressed="true" onclick="selectRole('cliente', this)">
+        <span class="role-icon">🪴</span>
+        <span class="role-title">Cliente</span>
+        <span class="role-desc">Comprar</span>
+      </button>
+      <button type="button" class="role-card" aria-pressed="false" onclick="selectRole('vendedor', this)">
+        <span class="role-icon">🏪</span>
+        <span class="role-title">Vendedor</span>
+        <span class="role-desc">Gerenciar loja</span>
+      </button>
+      <button type="button" class="role-card" aria-pressed="false" onclick="selectRole('entregador', this)">
+        <span class="role-icon">🛵</span>
+        <span class="role-title">Entregador</span>
+        <span class="role-desc">Coletas e entregas</span>
+      </button>
+      <button type="button" class="role-card" aria-pressed="false" onclick="selectRole('admin', this)">
+        <span class="role-icon">🛡️</span>
+        <span class="role-title">Administração</span>
+        <span class="role-desc">Governança</span>
+      </button>
+    </div>
+
+      <img class="login-photo" src="assets/vitrine-botanica.webp" alt="" width="540" height="360">
+    </aside>
+    <section class="login-pane" aria-labelledby="loginTitle">
+    <h2 id="loginTitle">Entre na sua conta</h2>
+    <!-- Botão Oficial: Entrar com o Google -->
+    <button class="btn-google" id="btnGoogle" onclick="handleGoogleLogin()">
+      <svg class="google-icon" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"/>
+        <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24Z"/>
+        <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15Z"/>
+        <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98Z"/>
+      </svg>
+      <span id="googleBtnText">Continuar com o Google</span>
+    </button>
+
+    <div class="divider">
+      <span>ou com e-mail e senha</span>
+    </div>
+
+    <!-- Formulário com Validação Completa de E-mail, Senha Segura e Telefone -->
+    <form id="authForm" novalidate onsubmit="handleFormSubmit(event)">
+      
+      <!-- Campos adicionais de Cadastro -->
+      <div id="registerFields" style="display:none">
+        <p class="field-hint">O cadastro público habilita Cliente. A equipe RAIZ autoriza os perfis de vendedor e entregador.</p>
+        <div class="form-group">
+          <label class="form-label" for="inputNome">Nome Completo</label>
+          <div class="input-wrapper">
+            <input type="text" id="inputNome" class="form-input" placeholder="Ex: Ana Beatriz Silva" autocomplete="name" />
+          </div>
+          <div class="field-error" id="nomeError">Por favor, informe seu nome completo (mínimo 3 letras).</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="inputTelefone">
+            <span>Telefone / WhatsApp</span>
+            <span style="font-weight:400;font-size:0.75rem;color:var(--muted)">DDD + Número</span>
+          </label>
+          <div class="input-wrapper">
+            <input type="tel" id="inputTelefone" class="form-input" placeholder="(65) 99654-3210" maxlength="15" autocomplete="tel" />
+          </div>
+          <div class="field-hint">Máscara automática: (XX) 9XXXX-XXXX</div>
+          <div class="field-error" id="telError">Informe um telefone celular válido com DDD (ex: (65) 99654-3210).</div>
+        </div>
+      </div>
+
+      <!-- Campo de E-mail com Validação e Sanitização -->
+      <div class="form-group">
+        <label class="form-label" for="inputEmail">E-mail</label>
+        <div class="input-wrapper">
+          <input type="email" id="inputEmail" class="form-input" required placeholder="seu.email@exemplo.com" autocomplete="email" />
+        </div>
+        <div class="field-error" id="emailError">Informe um e-mail válido (ex: seu.nome@dominio.com).</div>
+      </div>
+
+      <!-- Campo de Senha com Medidor de Segurança -->
+      <div class="form-group">
+        <label class="form-label" for="inputSenha">
+          <span>Senha</span>
+          <span id="passReqLabel" style="font-weight:400;font-size:0.75rem;color:var(--muted)">Mínimo 8 caracteres</span>
+        </label>
+        <div class="input-wrapper">
+          <input type="password" id="inputSenha" class="form-input" required placeholder="Digite sua senha" autocomplete="current-password" />
+          <button type="button" class="btn-toggle-eye" onclick="togglePassVisibility('inputSenha', this)" title="Ver senha">👁️</button>
+        </div>
+
+        <!-- Barra de Força da Senha (ativa no cadastro) -->
+        <div id="strengthMeterBox" class="strength-meter" style="display:none">
+          <div class="strength-bars">
+            <div id="seg1" class="strength-bar-seg"></div>
+            <div id="seg2" class="strength-bar-seg"></div>
+            <div id="seg3" class="strength-bar-seg"></div>
+            <div id="seg4" class="strength-bar-seg"></div>
+          </div>
+          <div class="strength-label">
+            <span>Segurança da Senha:</span>
+            <span id="strengthText" style="color:var(--danger)">Muito Fraca</span>
+          </div>
+
+          <!-- Checklist dos Requisitos de Segurança -->
+          <div class="pass-checklist">
+            <div class="check-item" id="reqLen"><span class="check-icon">○</span> Mínimo de 8 caracteres</div>
+            <div class="check-item" id="reqCase"><span class="check-icon">○</span> Letras maiúsculas (A-Z) e minúsculas (a-z)</div>
+            <div class="check-item" id="reqNum"><span class="check-icon">○</span> Pelo menos um número (0-9)</div>
+            <div class="check-item" id="reqSpec"><span class="check-icon">○</span> Pelo menos um caractere especial (!@#$%...)</div>
+          </div>
+        </div>
+
+        <div class="field-error" id="senhaError">A senha deve atender a todos os critérios de segurança acima.</div>
+      </div>
+
+      <!-- Confirmação de Senha (ativa no cadastro) -->
+      <div id="confirmPassGroup" class="form-group" style="display:none">
+        <label class="form-label" for="inputConfirmSenha">Confirmar Senha</label>
+        <div class="input-wrapper">
+          <input type="password" id="inputConfirmSenha" class="form-input" placeholder="Digite a senha novamente" autocomplete="new-password" />
+          <button type="button" class="btn-toggle-eye" onclick="togglePassVisibility('inputConfirmSenha', this)" title="Ver senha">👁️</button>
+        </div>
+        <div class="field-error" id="confirmSenhaError">As senhas não coincidem. Digite exatamente a mesma senha.</div>
+      </div>
+
+      <label id="termsAcceptance" hidden><input id="acceptTerms" type="checkbox"> Li e aceito os <a href="termos.html" target="_blank" rel="noopener">termos de uso</a> e estou ciente da <a href="privacidade.html" target="_blank" rel="noopener">política de privacidade</a>.</label>
+      <button type="submit" class="btn-submit" id="btnSubmit">
+        Entrar na Plataforma
+      </button>
+    </form>
+
+    <div class="login-support-recovery"><a href="recuperar-senha.html">Esqueci minha senha</a></div>
+    <nav class="login-support-nav" aria-label="Documentos da RAIZ"><a href="privacidade.html">Privacidade</a><a href="termos.html">Termos de uso</a></nav>
+    <p class="login-account-removal"><a href="excluir-conta.html">Solicitar exclusão da conta</a></p>
+    <p id="accessMessage" role="status" tabindex="-1"></p>
+    <div class="mode-toggle">
+      <span id="toggleText">Ainda não tem uma conta?</span>
+      <button type="button" class="raiz-button" onclick="toggleAuthMode()" id="toggleLink">Cadastre-se</button>
+    </div>
+
+    <!-- Atalhos Rápidos Demo (1 Clique para Teste Acadêmico) -->
+    <div class="demo-box">
+      <div class="demo-title">⚡ Apresentação sem login (1 clique)</div>
+      <div class="demo-chips">
+        <button type="button" class="demo-chip" onclick="quickDemoLogin('cliente')">
+          🪴 Ana Beatriz<br><span style="font-size:0.68rem;color:#52B788">Cliente (UC)</span>
+        </button>
+        <button type="button" class="demo-chip" onclick="quickDemoLogin('vendedor')">
+          🏪 Flora Verde<br><span style="font-size:0.68rem;color:#C85A32">Produtor (UP)</span>
+        </button>
+        <button type="button" class="demo-chip" onclick="quickDemoLogin('entregador')">
+          🛵 Lucas<br><span style="font-size:0.68rem;color:#0288D1">Entregador (UE)</span>
+        </button>
+        <button type="button" class="demo-chip" onclick="quickDemoLogin('admin')">
+          🛡️ Helena<br><span style="font-size:0.68rem;color:#1B4332">Administrador (UA)</span>
+        </button>
+        
+      </div>
+    </div>
+
+    <div class="footer-links">
+      <a href="index.html">← Voltar ao Portal Central de Apps</a>
+    </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status"></div>
+
+  <!-- Scripts de Conexão com Supabase, API REST e Auth -->
+  <script src="config/environment.js"></script>
+  <script src="config/supabase-client.js"></script>
+  <script src="config/web-access.js"></script>
+<script src="config/api-web.js"></script>
+
+  <script>
+    let currentRole = 'cliente';
+    let isRegisterMode = false;
+
+    // Elementos do DOM
+    const emailInput = document.getElementById('inputEmail');
+    const senhaInput = document.getElementById('inputSenha');
+    const confirmInput = document.getElementById('inputConfirmSenha');
+    const nomeInput = document.getElementById('inputNome');
+    const telInput = document.getElementById('inputTelefone');
+
+    // Inicialização ao Carregar
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Detecta parâmetro de query ?role= na URL
+      const urlParams = new URLSearchParams(window.location.search);
+      if (!RaizDB.presentationAllowed) {
+        document.querySelector('.demo-box').hidden = true;
+      }
+      if (!window.RaizEnvironment?.googleOAuth) document.getElementById('btnGoogle').hidden = true;
+      const queryRole = urlParams.get('role');
+      if (queryRole && ['cliente', 'vendedor', 'entregador', 'admin'].includes(queryRole)) {
+        const cards = document.querySelectorAll('.role-card');
+        const roleIndex = { cliente: 0, vendedor: 1, entregador: 2, admin: 3 }[queryRole];
+        if (cards[roleIndex]) selectRole(queryRole, cards[roleIndex]);
+      }
+
+      if (urlParams.has("cadastro") && currentRole !== "admin") toggleAuthMode();
+      RaizAccess.restoreLogin(currentRole);
+      RaizDB.ready.then(() => {
+        if (!RaizDB.isLocal) return;
+        document.getElementById('btnGoogle').hidden = true;
+        document.getElementById('toggleLink').hidden = true;
+        const notice = document.createElement('p');
+        notice.className = 'raiz-notice';
+        notice.textContent = 'Ambiente autenticado local: contas fictícias configuradas pelo responsável. Sem envio ao Supabase.';
+        document.getElementById('accessMessage').before(notice);
+      });
+
+      // 3. Configura listeners de validação em tempo real
+      setupValidationListeners();
+    });
+
+    // Trata mensagens de erro ou sucesso no retorno do Google OAuth
+    function selectRole(role, cardElement) {
+      if (role === "admin" && isRegisterMode) toggleAuthMode();
+      currentRole = role;
+      document.querySelectorAll('.role-card').forEach(card => {
+        const selected = card === cardElement;
+        card.classList.toggle('active', selected);
+        card.setAttribute('aria-pressed', String(selected));
+      });
+
+      const labels = {
+        cliente: '🪴 Cliente (UC)',
+        vendedor: '🏪 Produtor (UP)',
+        entregador: '🛵 Entregador (UE)',
+        admin: '🛡️ Admin (UA)'
+      };
+
+      document.getElementById('roleBadge').textContent = labels[role];
+      document.getElementById('googleBtnText').textContent = 'Continuar com o Google';
+    }
+
+    // Alternar entre Login e Cadastro
+    function toggleAuthMode() {
+      if (!isRegisterMode && currentRole === "admin") {
+        showToast("O perfil administrativo é concedido pela equipe responsável.");
+        return;
+      }
+      isRegisterMode = !isRegisterMode;
+      document.getElementById('termsAcceptance').hidden=!isRegisterMode;
+      document.getElementById('loginTitle').textContent = isRegisterMode ? 'Crie sua conta' : 'Entre na sua conta';
+      const regFields = document.getElementById('registerFields');
+      const confirmGroup = document.getElementById('confirmPassGroup');
+      const strengthBox = document.getElementById('strengthMeterBox');
+      const submitBtn = document.getElementById('btnSubmit');
+      const toggleText = document.getElementById('toggleText');
+      const toggleLink = document.getElementById('toggleLink');
+      const passReqLabel = document.getElementById('passReqLabel');
+
+      clearAllErrors();
+
+      if (isRegisterMode) {
+        regFields.style.display = 'block';
+        confirmGroup.style.display = 'block';
+        strengthBox.style.display = 'block';
+        passReqLabel.textContent = 'Senha Forte Obrigatória';
+        submitBtn.textContent = 'Criar Minha Conta no RAIZ';
+        toggleText.textContent = 'Já possui uma conta cadastrada?';
+        toggleLink.textContent = 'Fazer Login';
+        validatePasswordStrength(senhaInput.value);
+      } else {
+        regFields.style.display = 'none';
+        confirmGroup.style.display = 'none';
+        strengthBox.style.display = 'none';
+        passReqLabel.textContent = 'Mínimo 8 caracteres';
+        submitBtn.textContent = 'Entrar na Plataforma';
+        toggleText.textContent = 'Ainda não tem uma conta?';
+        toggleLink.textContent = 'Cadastre-se';
+      }
+    }
+
+    // Olho Mostrar / Ocultar Senha
+    function togglePassVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = '🔒';
+      } else {
+        input.type = 'password';
+        btn.textContent = '👁️';
+      }
+    }
+
+    // ==========================================
+    // MÁSCARA E VALIDAÇÕES EM TEMPO REAL
+    // ==========================================
+
+    function setupValidationListeners() {
+      // 1. Validação de E-mail
+      emailInput.addEventListener('input', () => {
+        validateEmailField();
+      });
+
+      emailInput.addEventListener('blur', () => {
+        validateEmailField(true);
+      });
+
+      // 2. Máscara de Telefone Brasileira
+      telInput.addEventListener('input', (e) => {
+        let v = e.target.value.replace(/\D/g, '');
+        if (v.length > 11) v = v.substring(0, 11);
+
+        if (v.length > 10) {
+          v = v.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+        } else if (v.length > 6) {
+          v = v.replace(/^(\d{2})(\d{4})(\d{0,4})$/, '($1) $2-$3');
+        } else if (v.length > 2) {
+          v = v.replace(/^(\d{2})(\d{0,5})$/, '($1) $2');
+        } else if (v.length > 0) {
+          v = v.replace(/^(\d{0,2})$/, '($1');
+        }
+        e.target.value = v;
+        validatePhoneField();
+      });
+
+      // 3. Força da Senha
+      senhaInput.addEventListener('input', () => {
+        if (isRegisterMode) {
+          validatePasswordStrength(senhaInput.value);
+          validatePasswordMatch();
+        } else {
+          document.getElementById('senhaError').style.display = 'none';
+          senhaInput.classList.remove('is-invalid');
+        }
+      });
+
+      // 4. Confirmação de Senha
+      confirmInput.addEventListener('input', () => {
+        if (isRegisterMode) validatePasswordMatch();
+      });
+    }
+
+    function isValidEmail(email) {
+      const re = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$/;
+      return re.test(String(email).trim().toLowerCase());
+    }
+
+    function validateEmailField(isBlur = false) {
+      const email = emailInput.value.trim();
+      const errEl = document.getElementById('emailError');
+      if (!email) {
+        if (isBlur) {
+          showError(emailInput, errEl, 'O e-mail é obrigatório.');
+          return false;
+        }
+        clearField(emailInput, errEl);
+        return false;
+      }
+      if (!isValidEmail(email)) {
+        showError(emailInput, errEl, 'Informe um e-mail válido (ex: seu.nome@gmail.com).');
+        return false;
+      }
+      showSuccess(emailInput, errEl);
+      return true;
+    }
+
+    function validatePhoneField(isBlur = false) {
+      if (!isRegisterMode) return true;
+      const raw = telInput.value.replace(/\D/g, '');
+      const errEl = document.getElementById('telError');
+
+      if (!raw) {
+        if (isBlur) {
+          showError(telInput, errEl, 'O telefone para contato é obrigatório.');
+          return false;
+        }
+        clearField(telInput, errEl);
+        return false;
+      }
+
+      const ddd = parseInt(raw.substring(0, 2), 10);
+      const validDdd = ddd >= 11 && ddd <= 99;
+
+      if (!validDdd || raw.length < 10) {
+        showError(telInput, errEl, 'Informe um telefone completo com DDD válido (ex: (65) 99654-3210).');
+        return false;
+      }
+
+      showSuccess(telInput, errEl);
+      return true;
+    }
+
+    function validatePasswordStrength(pwd) {
+      const hasLength = pwd.length >= 8;
+      const hasCase = /[A-Z]/.test(pwd) && /[a-z]/.test(pwd);
+      const hasNum = /[0-9]/.test(pwd);
+      const hasSpec = /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?~`\\/]/.test(pwd);
+
+      updateChecklist('reqLen', hasLength);
+      updateChecklist('reqCase', hasCase);
+      updateChecklist('reqNum', hasNum);
+      updateChecklist('reqSpec', hasSpec);
+
+      const score = [hasLength, hasCase, hasNum, hasSpec].filter(Boolean).length;
+      updateStrengthBars(score);
+
+      const errEl = document.getElementById('senhaError');
+      if (score < 4 && pwd.length > 0) {
+        errEl.style.display = 'block';
+        errEl.textContent = 'A senha precisa atender a todos os 4 requisitos de segurança.';
+        senhaInput.classList.add('is-invalid');
+        senhaInput.classList.remove('is-valid');
+        return false;
+      } else if (score === 4) {
+        errEl.style.display = 'none';
+        senhaInput.classList.remove('is-invalid');
+        senhaInput.classList.add('is-valid');
+        return true;
+      }
+      return false;
+    }
+
+    function updateChecklist(id, isValid) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.toggle('valid', isValid);
+      const icon = el.querySelector('.check-icon');
+      if (icon) icon.textContent = isValid ? '✓' : '○';
+    }
+
+    function updateStrengthBars(score) {
+      const colors = ['#E53E3E', '#DD6B20', '#D69E2E', '#38A169'];
+      const texts = ['Muito Fraca', 'Fraca', 'Média', 'Forte e Segura ✨'];
+
+      for (let i = 1; i <= 4; i++) {
+        const seg = document.getElementById('seg' + i);
+        if (seg) {
+          seg.style.background = i <= score ? colors[score - 1] : '#E2E8F0';
+        }
+      }
+
+      const txtEl = document.getElementById('strengthText');
+      if (txtEl) {
+        txtEl.textContent = texts[Math.max(0, score - 1)] || 'Muito Fraca';
+        txtEl.style.color = colors[Math.max(0, score - 1)] || '#E53E3E';
+      }
+    }
+
+    function validatePasswordMatch() {
+      const p1 = senhaInput.value;
+      const p2 = confirmInput.value;
+      const errEl = document.getElementById('confirmSenhaError');
+
+      if (!p2) {
+        clearField(confirmInput, errEl);
+        return false;
+      }
+      if (p1 !== p2) {
+        showError(confirmInput, errEl, 'As senhas não coincidem. Digite exatamente a mesma senha.');
+        return false;
+      }
+      showSuccess(confirmInput, errEl);
+      return true;
+    }
+
+    function showError(input, errEl, msg) {
+      input.classList.add('is-invalid');
+      input.classList.remove('is-valid');
+      if (errEl) {
+        errEl.style.display = 'block';
+        errEl.textContent = msg;
+      }
+    }
+
+    function showSuccess(input, errEl) {
+      input.classList.remove('is-invalid');
+      input.classList.add('is-valid');
+      if (errEl) errEl.style.display = 'none';
+    }
+
+    function clearField(input, errEl) {
+      input.classList.remove('is-invalid');
+      input.classList.remove('is-valid');
+      if (errEl) errEl.style.display = 'none';
+    }
+
+    function clearAllErrors() {
+      document.querySelectorAll('.form-input').forEach(i => i.classList.remove('is-invalid', 'is-valid'));
+      document.querySelectorAll('.field-error').forEach(e => e.style.display = 'none');
+    }
+
+    // ==========================================
+    // ENVIO DO FORMULÁRIO COM TRATAMENTO DE RATE LIMIT
+    // ==========================================
+
+    async function handleFormSubmit(e) {
+      e.preventDefault();
+      if (RaizDB.isDemo) { quickDemoLogin(currentRole); return; }
+
+      const email = emailInput.value.trim().toLowerCase();
+      const senha = senhaInput.value;
+      const nome = nomeInput.value.trim();
+      const telefone = telInput.value.trim();
+
+      if (!validateEmailField(true)) {
+        emailInput.focus();
+        return;
+      }
+
+      if (isRegisterMode) {
+        if(!document.getElementById('acceptTerms').checked){RaizAccess.message('Leia os termos e marque o aceite para criar a conta.');return;}
+        if (nome.length < 3) {
+          showError(nomeInput, document.getElementById('nomeError'), 'Por favor, informe seu nome completo.');
+          nomeInput.focus();
+          return;
+        }
+
+        if (!validatePhoneField(true)) {
+          telInput.focus();
+          return;
+        }
+
+        const passOk = validatePasswordStrength(senha);
+        if (!passOk) {
+          senhaInput.focus();
+          showToast('A senha precisa cumprir todos os critérios de segurança.');
+          return;
+        }
+
+        if (!validatePasswordMatch()) {
+          confirmInput.focus();
+          return;
+        }
+
+      }
+      if (!senha) {
+        showToast('Informe sua senha.');
+        return;
+      }
+
+      const submitBtn = document.getElementById('btnSubmit');
+      const label = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Aguarde…';
+      try {
+        await RaizDB.ready;
+        const client = RaizAccess.client();
+        if (isRegisterMode) {
+          if (currentRole === 'admin') throw new Error('Cadastro administrativo indisponível.');
+          const { data, error } = await client.auth.signUp({
+            email, password: senha,
+            options: {
+              emailRedirectTo: RaizAccess.callback(currentRole),
+              data: { full_name: nome, telefone, perfil_solicitado: currentRole, termos_versao:'2026-11-23' }
+            }
+          });
+          if (error) throw error;
+          if (!data.session) {
+            RaizAccess.message('Confira seu e-mail para confirmar a conta. O cadastro público dá acesso de cliente. Perfis de vendedor e entregador precisam de aprovação.');
+            return;
+          }
+        } else {
+          const { error } = await client.auth.signInWithPassword({ email, password: senha });
+          if (error) throw error;
+        }
+        try { await RaizApi.initialize(client); void RaizApi.event(client,isRegisterMode?'cadastro':'login','auth'); } catch(_) {}
+        await RaizAccess.restoreLogin(currentRole);
+      } catch (error) {
+        RaizAccess.message(RaizAccess.authError(error));
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = label;
+      }
+    }
+
+    async function handleGoogleLogin() {
+      if (!window.RaizEnvironment?.googleOAuth) {
+        RaizAccess.message('Login com Google indisponível neste ambiente. Use e-mail e senha.');
+        return;
+      }
+      if (RaizDB.isDemo) { quickDemoLogin(currentRole); return; }
+      const button = document.getElementById('btnGoogle');
+      button.disabled = true;
+      try {
+        await RaizDB.ready;
+        const { error } = await RaizAccess.client().auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: RaizAccess.callback(currentRole) }
+        });
+        if (error) throw error;
+      } catch (error) {
+        RaizAccess.message(RaizAccess.authError(error));
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    function quickDemoLogin(role) {
+      if (!RaizDB.presentationAllowed) return;
+      if (!RaizAccess.demoRoles.includes(role)) return;
+      location.href = role + '/index.html?modo=demo';
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3500);
+    }
+  </script>
+</body>
+</html>

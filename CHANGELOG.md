@@ -24,3 +24,8 @@
 - Migrations, testes de permissões/concorrência e guia curto para mobile.
 
 Aplicação das migrations e configurações do Supabase remoto não é comprovada por testes locais. A nova sessão exige entrar novamente após atualização.
+# Emparelhamento local e Render — 23/11/2026
+
+- Fonte compartilhada em `web/`, build reproduzível e manifesto de hashes para conferir o conteúdo publicado.
+- Fluxo autenticado de pagamentos acadêmicos integrado às funções existentes do Supabase, mantendo paginação, recuperação de senha e permissões.
+- Sincronização com a cópia RAIZOTIMIZADO com backup e recusa de conflitos. Nenhuma migração ou escrita de dados remotos.

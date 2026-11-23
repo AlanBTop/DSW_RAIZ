@@ -128,7 +128,7 @@
           document.body.classList.remove('raiz-pending');
           return;
         }
-        if(window.RaizPresentation.source==='local' && window.RaizPaymentFlow) await window.RaizPaymentFlow.reconcile();
+        if(['local','apresentacao'].includes(window.RaizPresentation.source) && window.RaizPaymentFlow) await window.RaizPaymentFlow.reconcile();
         const app = document.createElement('script');
         app.src = 'app.js';
         app.onload = () => {

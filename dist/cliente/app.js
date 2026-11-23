@@ -92,7 +92,7 @@ function pageTitle() {
 function go(page) {
   state.page = page;
   if(['home','catalog','orders','favorites','profile'].includes(page)) history.replaceState(null,'','#'+page);
-  if(page==='orders' && RaizPresentation.source==='local') {
+  if(page==='orders' && ['local','apresentacao'].includes(RaizPresentation.source)) {
     RaizPaymentFlow.reconcile().then(()=>{syncLocalPaymentState();if(state.page==='orders')renderApp();}).catch(error=>toast(error.message));
   }
   renderApp();
@@ -182,7 +182,7 @@ function renderPage() {
   if (!c) return;
   const currentUser = window.RaizDB?.auth?.getCurrentUser() || { nome: 'Ana Beatriz' };
 
-  if (window.RaizMarket && RaizPresentation.source==='local' && RaizMarket.render(c)) return;
+  if (window.RaizMarket && ['local','apresentacao'].includes(RaizPresentation.source) && RaizMarket.render(c)) return;
   if (state.page === 'home') {
     c.innerHTML = `
       <section class="hero-card">
@@ -372,16 +372,16 @@ function saveCustomerProfile(kind) {
 }
 
 function paymentMethodsPanel() {
-  if(RaizPresentation.source!=='local') return '<section class="card payment-settings"><h3>Formas de pagamento</h3><p>O cadastro de preferências está disponível nos exemplos locais. Nenhum pagamento é processado.</p></section>';
+  if(RaizPresentation.source==='real') return '<section class="card payment-settings"><h3>Formas de pagamento</h3><p>Consulta somente leitura.</p></section>';
   const data=RaizPayments.read();
   return `<section class="card payment-settings"><h3>Formas de pagamento</h3>
-    <p class="payment-notice">Cadastros de exemplo, salvos neste navegador. Para cartão, somente bandeira, últimos quatro dígitos e validade. Não informe número completo, CVV ou senha.</p>
+    <p class="payment-notice">Cadastros fictícios na fonte selecionada. Para cartão, somente bandeira, últimos quatro dígitos e validade. Não informe número completo, CVV ou senha.</p>
     <div class="payment-list">${RaizPayments.methods().map(m=>`<article class="card soft"><strong>${escapeAttr(RaizPayments.label(m))}</strong>${m.expiry?`<p>Validade: ${escapeAttr(m.expiry)}</p>`:''}${data.defaultId===m.id?'<span class="badge green">Preferida</span>':''}<div class="raiz-route-actions"><button class="btn btn-outline" onclick="openPaymentEditor('${m.id}')">Editar</button><button class="btn btn-outline" onclick="preferPayment('${m.id}')">Tornar preferida</button><button class="btn btn-outline" onclick="deletePayment('${m.id}')">Remover</button></div></article>`).join('') || '<p>Nenhuma forma cadastrada. Pix e boleto podem ser selecionados diretamente no checkout quando aceitos pela loja.</p>'}</div>
     <button class="btn btn-primary" onclick="openPaymentEditor()">Adicionar forma de pagamento</button></section>`;
 }
 
 function openPaymentEditor(id=null) {
-  if(RaizPresentation.source!=='local') {toast('Use a fonte Exemplos locais para cadastrar preferências.');return;}
+  if(RaizPresentation.source==='real') {toast('Esta fonte é somente leitura.');return;}
   const method=RaizPayments.methods().find(m=>m.id===id) || {type:'credit'};
   const month=new Date(); const min=`${month.getFullYear()}-${String(month.getMonth()+1).padStart(2,'0')}`;
   openModal(`<div class="modal-head"><h2>${id?'Editar':'Adicionar'} forma de pagamento de exemplo</h2><button class="icon-btn" onclick="closeModal()" aria-label="Fechar cadastro">✕</button></div>
@@ -405,7 +405,7 @@ function savePaymentMethod(event,id) {
       last4:document.getElementById('paymentLast4').value,brand:document.getElementById('paymentBrand').value,
       expiry:document.getElementById('paymentExpiry').value,preferred:document.getElementById('paymentPreferred').checked});
     state.paymentSelection=entry.id;
-    closeModal(); renderApp(); toast('Forma de pagamento de exemplo salva neste navegador.');
+    closeModal(); renderApp(); toast('Forma de pagamento de exemplo salva na fonte selecionada.');
   } catch(error) {toast(error.message);}
 }
 function preferPayment(id) {try {RaizPayments.prefer(id);state.paymentSelection=id;renderApp();toast('Preferência salva.');}catch(error){toast(error.message);}}
@@ -575,6 +575,8 @@ function checkoutPage() {
 async function confirmOrder() {
   if(state.checkoutBusy) return;
   state.checkoutBusy=true;
+  const checkoutButton=document.querySelector('.checkout-summary .btn-primary');
+  if(checkoutButton)checkoutButton.disabled=true;
   try {
     const user=RaizPayments.profile();
     state.checkoutRequestId ||= crypto.randomUUID();
@@ -585,7 +587,7 @@ async function confirmOrder() {
     syncLocalPaymentState();state.checkoutRequestId=null;state.paymentOrderId=order.id;
     state.page='payment';renderApp();toast('Pedido reservado. Conclua o pagamento local de demonstração.');
   } catch(error) {toast(error.message);}
-  finally {state.checkoutBusy=false;}
+  finally {state.checkoutBusy=false;if(checkoutButton)checkoutButton.disabled=false;}
 }
 
 function orderSuccessPage() {
@@ -612,7 +614,7 @@ function orderSuccessPage() {
 function clientOrdersPage() {
   const all=getStorage('orders',[]).filter(o=>o.paymentId);
   if(state.clientOrder && !all.some(o=>o.id===state.clientOrder.id)) all.unshift(state.clientOrder);
-  return `<div class="page-title"><div><h1>Meus pedidos</h1><p>Pedidos e pagamentos salvos neste navegador.</p></div></div>
+  return `<div class="page-title"><div><h1>Meus pedidos</h1><p>Pedidos e pagamentos de exemplo na fonte selecionada.</p></div></div>
     ${all.length?all.map(o=>{
       const tx=RaizPaymentFlow.transaction(o.id);
       return `<article class="card payment-settings"><span class="badge green">Pedido #${Number(o.id)}</span>
@@ -638,13 +640,15 @@ async function openLocalPayment(id) {
 async function localPaymentAction(action) {
   if(state.paymentBusy)return;
   state.paymentBusy=true;
+  const controls=[...document.querySelectorAll('#pageContent button')];
+  for(const control of controls)control.disabled=true;
   try {
     const id=state.paymentOrderId || state.clientOrder?.id;
     await RaizPaymentFlow.act(id,action,{methodId:document.getElementById('retryPaymentMethod')?.value,
       installments:document.getElementById('retryInstallments')?.value || 1});
-    syncLocalPaymentState();renderApp();toast('Situação local atualizada. Nenhuma transação bancária.');
-  } catch(error) {syncLocalPaymentState();renderApp();toast(error.message);}
-  finally {state.paymentBusy=false;}
+    state.paymentBusy=false;syncLocalPaymentState();renderApp();toast('Situação atualizada na fonte selecionada. Nenhuma transação bancária.');
+  } catch(error) {state.paymentBusy=false;syncLocalPaymentState();renderApp();toast(error.message);}
+  finally {state.paymentBusy=false;for(const control of controls)control.disabled=false;}
 }
 async function copyLocalPaymentReference() {
   const field=document.getElementById('localPaymentReference');
@@ -662,7 +666,7 @@ function localPaymentPage() {
   const retry=options.list.find(o=>o.value===state.retryPaymentSelection) || options.list.find(o=>o.type===tx.method.type) || options.list[0];
   const pending=tx.state==='pending';
   return `<div class="page-title"><div><h1>Pagamento do pedido #${Number(id)}</h1><p>Fluxo completo de demonstração, sem banco e sem dinheiro real.</p></div><button class="btn btn-outline" onclick="go('orders')">Meus pedidos</button></div>
-    <div class="payment-notice"><strong>DEMONSTRAÇÃO LOCAL — SEM VALOR BANCÁRIO.</strong> A confirmação é feita nos botões abaixo. Não leia este registro como cobrança, Pix ou boleto real. Não informe cartão completo, CVV ou senha.</div>
+    <div class="payment-notice"><strong>DEMONSTRAÇÃO — SEM VALOR BANCÁRIO.</strong> ${RaizPresentation.source==='apresentacao'?'Dados salvos no Supabase.':'Dados salvos neste navegador.'} A confirmação é feita nos botões abaixo. Não leia este registro como cobrança, Pix ou boleto real. Não informe cartão completo, CVV ou senha.</div>
     <div class="grid-2" style="margin-top:18px"><section class="card"><h2>${esc(RaizPaymentFlow.STATUS[tx.state])}</h2>
       <p><strong>Total:</strong> ${fmt(tx.amountCents)}</p><p><strong>Forma:</strong> ${esc(tx.method.label)}</p>
       <p><strong>Parcelas:</strong> ${tx.installments.map((c,i)=>`${i+1}ª: ${fmt(c)}`).join(' · ')}</p>
@@ -792,9 +796,9 @@ function escapeAttr(s = '') {
 }
 
 // Inicializa a aplicação
-if (RaizPresentation.source==='local') RaizMarket.init();
+if (['local','apresentacao'].includes(RaizPresentation.source)) RaizMarket.init();
 renderApp();
-if(RaizPresentation.source==='local') {
+if(['local','apresentacao'].includes(RaizPresentation.source)) {
   syncLocalPaymentState();
   if(new URLSearchParams(location.search).get('acao')==='checkout') {if(!state.cart.length)addCart(1);startCheckout();}
   else renderApp();

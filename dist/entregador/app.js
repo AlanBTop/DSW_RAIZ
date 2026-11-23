@@ -215,7 +215,7 @@ function renderPage() {
           ${state.courierOnline ? 'Ver entregas disponíveis' : '✓ Ficar online agora'}
         </button>
         </div>
-        <img src="../assets/vitrine-botanica.webp" alt="Composição ilustrativa de plantas prontas para um novo lar" width="720" height="640">
+        <img src="../assets/vitrine-botanica.png" alt="Composição ilustrativa de plantas prontas para um novo lar" width="720" height="640">
       </section>
 
       <div class="grid-3" style="margin-top:18px">

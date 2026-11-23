@@ -1,0 +1,32 @@
+# Versão compartilhada entre local, GitHub e Render
+
+A fonte de publicação é `web/`. O build `python scripts/build_render.py` copia essa fonte para `dist/`, gera apenas a configuração pública de produção e registra os hashes em `dist/release.json`. O Render acompanha `main` de AlanBTop/DSW_RAIZ, executa esse build e publica `dist/`.
+
+A cópia `../RAIZOTIMIZADO/web/` usa os mesmos HTML, CSS, JavaScript, imagens e SDK. O arquivo `config/environment.js` mantém os exemplos habilitados apenas em loopback; `config/local-client.js` e o servidor Python são exclusivos da execução autenticada local. No Render, os quatro perfis exigem login e parâmetros de demonstração não liberam acesso.
+
+## Atualizar após editar localmente
+
+Execute `ATUALIZAR_RENDER.bat` em RAIZOTIMIZADO ou, neste repositório:
+
+```powershell
+python scripts/sync_local.py --publish
+```
+
+O comando importa os arquivos conhecidos de `RAIZOTIMIZADO/web`, cria backup dos arquivos substituídos em `artifacts/sync-backups/`, valida a paridade, cria o commit e envia a `main`. O deploy é automático. Uma falha no push interrompe a publicação e preserva o commit para nova tentativa. Acompanhe o deploy no painel do Render; o envio ao GitHub sozinho não comprova que o site já foi atualizado.
+
+Sem `--publish`, o script apenas sincroniza os arquivos. Se houver mudanças independentes nos dois lados, ele interrompe antes da cópia. Para levar alterações do repositório à cópia local, use `python scripts/sync_local.py --export`. Novos arquivos devem ser adicionados explicitamente a `web/` no repositório; remoções também precisam de revisão. O script não importa SQL, relatórios, bancos locais, credenciais ou arquivos de ambiente.
+
+## Conferir a versão
+
+```powershell
+python tests/parity.py
+python tests/parity.py --remote https://dsw-raiz.onrender.com
+```
+
+A segunda conferência baixa todos os arquivos públicos do manifesto e compara SHA-256. `release.json` identifica a versão por conteúdo. A configuração de produção e os headers são específicos da hospedagem; os demais arquivos devem ser idênticos.
+
+## Funcionalidades reunidas
+
+Os pagamentos acadêmicos existentes na versão local foram incorporados à interface autenticada, com Pix, boleto, crédito em até três parcelas e débito, histórico, nova tentativa, comprovante e estorno simulado. Não há cobrança bancária. O preparo respeita o pagamento aprovado. Paginação, layout dos perfis, recuperação de senha, permissões e recursos de privacidade do repositório foram preservados.
+
+`raiz_pagamentos` já existe no projeto Supabase informado. `raiz_recursos` não existe na conferência anônima de 23/11/2026. A interface preserva a compatibilidade com essa base, sem habilitar os recursos de extensão ausentes. Nenhuma migração, conta ou dado remoto foi alterado neste emparelhamento. Os testes de negócio usam banco temporário local; fixtures de navegador não comprovam login remoto de uma conta real.

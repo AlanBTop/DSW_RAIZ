@@ -26,8 +26,8 @@ Antes de processar, a equipe precisa encerrar pedidos/entregas pendentes. O oper
 
 1. Execute os testes de SQL, navegador e arquivos estáticos do README.
 2. Gere a configuração de produção e regenere documentos/headers com `python scripts/prepare_site.py` (Pillow necessário).
-3. Confira `.openai/hosting.json`, commit e pacote publicado. O artefato estático contém somente `dist/` e o manifesto de hospedagem.
-4. Confira HTTPS, redirecionamento HTTP, 404 real, CSP e acesso de visitantes no domínio de destino. O domínio Sites existente é preservado; nenhum DNS customizado é criado pelo código.
+3. Execute `python scripts/build_render.py`: a fonte `web/` gera `dist/` e `release.json`. Envie a branch `main` ao GitHub; o Render publica `dist/` automaticamente. Veja `EMPARELHAMENTO.md` para sincronizar a cópia local.
+4. Confira HTTPS, redirecionamento HTTP, 404 real, CSP e acesso de visitantes em https://dsw-raiz.onrender.com. Compare todos os arquivos com `python tests/parity.py --remote https://dsw-raiz.onrender.com`.
 5. Homologue contas fictícias no Supabase remoto, sem usar dados pessoais reais em QA.
 
 ## Monitoramento e retenção

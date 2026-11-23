@@ -4,7 +4,7 @@
  const fold=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
  const cats=['todos','plantas','vasos','substratos','sementes','ferramentas'];
  const label=v=>v==='todos'?'Todos':v[0].toUpperCase()+v.slice(1);
- const photo='../assets/vitrine-botanica.webp';
+ const photo='../assets/vitrine-botanica.png';
  let selected=0,variant='',image=0;
  function cep(){return String(getStorage('customer_cep','78200000'));}
  function shipping(){const c=cep();return c.startsWith('782')?{cents:1590,days:'1 a 2 dias úteis'}:c.startsWith('78')?{cents:2490,days:'3 a 5 dias úteis'}:{cents:3990,days:'5 a 10 dias úteis'};}

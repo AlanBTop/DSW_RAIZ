@@ -223,9 +223,63 @@
     }
 
     let checkoutId;
+    let checkoutMethod = 'pix';
+    let checkoutInstallments = 1;
+    const paymentNames = {pix:'Pix',credit:'Cartão de crédito',debit:'Cartão de débito',boleto:'Boleto'};
+    const paymentStates = {pending:'Aguardando pagamento',paid:'Aprovado (simulado)',rejected:'Recusado (simulado)',expired:'Expirado',cancelled:'Cancelado',refunded:'Estornado (simulado)'};
+    function paymentChoice(initial='pix',count=1) {
+      const wrapper=el('div');
+      const label=el('label','Forma de pagamento');
+      const method=el('select');
+      for(const [value,text] of Object.entries(paymentNames)) {const option=el('option',text);option.value=value;method.append(option);}
+      method.value=initial;label.append(method);
+      const installmentLabel=el('label','Parcelas');const installments=el('select');
+      for(let n=1;n<=3;n++) {const option=el('option',n===1?'À vista':n+' parcelas sem juros (simulação)');option.value=n;installments.append(option);}
+      installments.value=count;installments.disabled=method.value!=='credit';
+      method.onchange=()=>{installments.disabled=method.value!=='credit';if(installments.disabled)installments.value=1;};
+      installmentLabel.append(installments);wrapper.append(label,installmentLabel);
+      return {wrapper,method,installments};
+    }
+    function paymentCard(o,t,editable=false) {
+      const box=el('div',null,'raiz-payment');
+      if(!t) {box.append(el('p','Pedido anterior à integração. Não há confirmação de pagamento.'));return box;}
+      const pieces=Array.from({length:t.parcelas},(_,i)=>Math.floor(t.valor_centavos/t.parcelas)+(i<t.valor_centavos%t.parcelas?1:0));
+      box.append(el('h4',paymentStates[t.estado]),el('p',paymentNames[t.metodo]+' · '+money.format(t.valor_centavos/100)),
+        el('p','Parcelas: '+pieces.map((v,i)=>(i+1)+'ª '+money.format(v/100)).join(' · ')),
+        el('p','Vencimento: '+new Date(t.expira_em).toLocaleString('pt-BR')),el('p',t.referencia),
+        el('p','Demonstração acadêmica persistida. Não é cobrança, Pix Copia e Cola ou boleto bancário.','raiz-notice'));
+      if(editable) {
+        const act=(label,kind,method=null,count=1)=>action(label,()=>rpc('pagamento_acao',{p_pedido:o.id,p_acao:kind,p_metodo:method,p_parcelas:count}),'Pagamento de demonstração atualizado.');
+        box.append(act('Atualizar situação e prazo','refresh'));
+        if(t.estado==='pending') {
+          box.append(act(t.metodo==='pix'?'Simular recebimento Pix':t.metodo==='boleto'?'Simular compensação do boleto':'Simular aprovação do cartão','approve'));
+          if(['credit','debit'].includes(t.metodo))box.append(act('Simular recusa do cartão','reject'));
+        }
+        if(t.estado==='rejected') {
+          const choice=paymentChoice(t.metodo,t.parcelas);box.append(choice.wrapper,
+            action('Criar nova tentativa',()=>rpc('pagamento_acao',{p_pedido:o.id,p_acao:'retry',p_metodo:choice.method.value,p_parcelas:Number(choice.installments.value)}),'Nova tentativa criada sem nova reserva de estoque.'));
+        }
+        if(['pending','rejected'].includes(t.estado))box.append(act('Cancelar pedido e liberar estoque','cancel'));
+        if(t.estado==='paid' && o.status==='Confirmado')box.append(act('Simular estorno integral antes do preparo','refund'));
+        box.append(button('Baixar comprovante de demonstração',()=>{
+          const text=['RAIZ — DEMONSTRAÇÃO ACADÊMICA','SEM VALOR FISCAL OU BANCÁRIO','Pedido #'+o.id,t.referencia,paymentNames[t.metodo],paymentStates[t.estado],money.format(t.valor_centavos/100),'Parcelas: '+pieces.map(v=>money.format(v/100)).join(' + ')].join('\n');
+          const url=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'}));
+          const a=el('a');a.href=url;a.download='RAIZ_DEMONSTRACAO_'+o.id+'.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+        }));
+      }
+      const history=el('details');history.append(el('summary','Histórico do pagamento'));
+      for(const event of t.eventos)history.append(el('p',new Date(event.em).toLocaleString('pt-BR')+' · '+event.acao));
+      box.append(history);return box;
+    }
+
     const catalogState = { search: '', category: '', favorites: false };
     let catalogOffline=false;
+    async function paymentsForRole() {
+      try { return await rpc('pagamentos') || []; }
+      catch (error) { if (['PGRST202','42883'].includes(error?.code)) return null; throw error; }
+    }
     async function customer() {
+      const payments = await paymentsForRole();
       const savedFavorites=await RaizApi.all(db,'cliente_favoritos','id,produto_id');
       const catalogResult=await RaizApi.catalog(db,{page:pages.catalog||0,search:catalogState.search,category:catalogState.category,
         ...(catalogState.favorites?{ids:savedFavorites.map(f=>f.produto_id)}:{})});
@@ -323,18 +377,30 @@
           const subtotal = cart.reduce((sum, item, i) => sum + RaizApi.moneyCents(prices[i].preco) * item.quantidade, 0) / 100;
           metrics(summary,[['Subtotal',money.format(subtotal)],['Frete',money.format(15)],['Total estimado',money.format(subtotal+15)]]);
         }
-        summary.append(el('p','Registro sem cobrança. Finalize um pedido por loja.'),
-        action('Registrar pedido sem pagamento', async () => {
-          checkoutId ||= crypto.randomUUID();
-          const id = await rpc('checkout',{p_requisicao:checkoutId});
-          checkoutId = null;
-          return id;
-        }, id => 'Pedido #' + id + ' registrado. Nenhum pagamento foi processado.'));
+        if (payments !== null) {
+          const choice=paymentChoice(checkoutMethod,checkoutInstallments);
+          choice.method.addEventListener('change',()=>{checkoutMethod=choice.method.value;});
+          choice.installments.addEventListener('change',()=>{checkoutInstallments=Number(choice.installments.value);});
+          summary.append(el('p','Pagamento acadêmico simulado, sem cobrança real. Finalize um pedido por loja.'),choice.wrapper,
+            action('Confirmar pedido e simular pagamento',async()=>{
+              checkoutId ||= crypto.randomUUID();
+              const id=await rpc('checkout_pagamento',{p_requisicao:checkoutId,p_metodo:choice.method.value,p_parcelas:Number(choice.installments.value)});
+              checkoutId=null;return id;
+            },id=>'Pedido #'+id+' reservado. Aguardando pagamento de demonstração.'));
+        } else {
+          summary.append(el('p','Registro sem cobrança. Finalize um pedido por loja.'),
+            action('Registrar pedido sem pagamento',async()=>{
+              checkoutId ||= crypto.randomUUID();
+              const id=await rpc('checkout',{p_requisicao:checkoutId});checkoutId=null;return id;
+            },id=>'Pedido #'+id+' registrado. Nenhum pagamento foi processado.'));
+        }
       }
       list(section('Meus pedidos', 'pedidos', 'Pedidos'),orders,o => {
         const row=card('#'+o.id+' · '+o.status,el('p',o.data_formatada+' · '+money.format(o.total)),el('p',o.forma_pagamento),
           ...items.filter(i=>i.pedido_id===o.id).map(i=>el('p',i.quantidade+' × '+i.produto_nome)));
-        if(features.cancelamento && o.status==='Confirmado') cancellation(row,o.id);
+        const payment=payments?.find(t=>t.pedido_id===o.id);
+        if(payments !== null) row.append(paymentCard(o,payment,true));
+        if(!payment && features.cancelamento && o.status==='Confirmado') cancellation(row,o.id);
         if(features.recebimento && o.status==='Entregue' && !o.recebimento_confirmado_em){
           const [label,received]=field('Confirmo que recebi os produtos','checkbox');
           row.append(label,action('Confirmar recebimento',()=>{
@@ -382,6 +448,7 @@
     }
 
     async function seller() {
+      const payments=await paymentsForRole();
       const [stores, products, orders, items, sales] = await Promise.all([
         query('vendedor_lojas','nome,endereco,horario_funcionamento'),
         query('vendedor_produtos','id,nome,categoria,preco,estoque,ativo,descricao'),
@@ -428,8 +495,10 @@
       list(orderSection,orders,o => {
         const row = card('#' + o.id + ' · ' + o.status,el('p',o.cliente_nome + ' · ' + money.format(o.total)),
           ...items.filter(i => i.pedido_id === o.id).map(i => el('p',i.quantidade + ' × ' + i.produto_nome)));
-        if (o.status === 'Pendente') row.append(action('Iniciar preparo e disponibilizar entrega', () => rpc('preparo',{p_pedido:o.id})));
-        if(features.cancelamento && ['Pendente','Em preparo'].includes(o.status)) cancellation(row,o.id);
+        const payment=payments?.find(t=>t.pedido_id===o.id);
+        if(payment)row.append(paymentCard(o,payment));
+        if (o.status === 'Pendente' && (payments === null || payment?.estado === 'paid')) row.append(action('Iniciar preparo e disponibilizar entrega', () => rpc('preparo',{p_pedido:o.id})));
+        if(!payment && features.cancelamento && ['Pendente','Em preparo'].includes(o.status)) cancellation(row,o.id);
         return row;
       },'Nenhum pedido recebido.');
     }
@@ -484,6 +553,7 @@
 
     let adminSearch='';
     async function admin() {
+      const payments=await paymentsForRole();
       const [userResult,orders,trips,products] = await Promise.all([
         features.versao>=4?rpc('usuarios_pagina',{p_busca:adminSearch,p_pagina:pages.usuarios||0}):rpc('usuarios'),query('cliente_pedidos','id,status,total'),query('entregador_corridas','id,status'),
         query('cliente_produtos','id,nome,vendedor_nome,ativo')
@@ -515,7 +585,7 @@
         if (p.ativo) row.append(action('Desativar produto', () => rpc('moderar_produto',{p_produto:p.id})));
         return row;
       },'Nenhum produto.');
-      list(section('Pedidos', 'pedidos'),orders,o => card('#' + o.id, el('span',o.status,'raiz-status'),el('p',money.format(o.total))), 'Nenhum pedido.');
+      list(section('Pedidos', 'pedidos'),orders,o => card('#' + o.id, el('span',o.status,'raiz-status'),el('p',money.format(o.total)),...(payments === null ? [] : [paymentCard(o,payments.find(t=>t.pedido_id===o.id))])), 'Nenhum pedido.');
       list(section('Entregas', 'entregas'),trips,t => card('#' + t.id,el('span',t.status,'raiz-status')), 'Nenhuma entrega.');
     }
 

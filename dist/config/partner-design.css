@@ -271,3 +271,7 @@ table tbody tr:hover { background: #f8faf7; }
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+.raiz-dashboard .raiz-secondary { background: #fff; color: #1b4332; }
+.raiz-dashboard .raiz-secondary:hover { background: #1b4332; color: #fff; }
+.raiz-dashboard .bottom-nav .nav-btn { width: auto; }

@@ -26,6 +26,20 @@
     else if(name==='raiz_evento')state.events.push({id:state.events.length+1,evento:args.p_evento,area:args.p_area,referencia:args.p_referencia,created_at:new Date().toISOString()});
     else if(name==='raiz_usuarios_pagina')result={itens:[{id:'buyer',email:'cliente@teste.invalid',perfil:'cliente',ativo:true}],total:1};
     else if(name==='raiz_ofertas_pagina')result={itens:[],total:0};
+    else if(name==='raiz_pagamentos') {
+      if(!sessionStorage.getItem('qaPayments'))return {data:null,error:{code:'PGRST202'}};
+      result=state.payments || [];
+    }
+    else if(name==='raiz_checkout_pagamento'){
+      result=902;
+      state.orders.unshift({id:902,status:'Confirmado',total:25.25,forma_pagamento:'Cartão (simulado)',data_formatada:'23/11/2026'});
+      state.payments=[{pedido_id:902,metodo:args.p_metodo,parcelas:args.p_parcelas,estado:'pending',valor_centavos:2525,expira_em:new Date(Date.now()+900000).toISOString(),referencia:'QA-902',eventos:[]}];
+    }
+    else if(name==='raiz_pagamento_acao'){
+      const tx=state.payments.find(t=>t.pedido_id===args.p_pedido);
+      tx.estado={approve:'paid',reject:'rejected',retry:'pending',cancel:'cancelled',refund:'refunded'}[args.p_acao] || tx.estado;
+      tx.eventos.push({em:new Date().toISOString(),acao:args.p_acao});
+    }
     else if(name==='raiz_checkout')result=902;
     return {data:result,error:null};
   }

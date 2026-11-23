@@ -5,11 +5,12 @@
   const copy=v=>structuredClone(v);
   const money=cents=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(cents/100);
   let queue=Promise.resolve();
-  function local() {if(!RaizDB.isDemo || RaizPresentation.source!=='local') throw new Error('Use Exemplos locais para o fluxo de pagamento sem banco.');}
+  function local() {if(!RaizDB.isDemo || !['local','apresentacao'].includes(RaizPresentation.source)) throw new Error('Use Exemplos locais ou Apresentação no Supabase para simular pagamentos.');}
   async function locked(task) {
     local();
-    if(navigator.locks?.request) return navigator.locks.request('raiz-payment-local',task);
-    const next=queue.then(task); queue=next.catch(()=>{}); return next;
+    const run=()=>RaizPresentation.atomic(task);
+    if(navigator.locks?.request) return navigator.locks.request('raiz-payment-local',run);
+    const next=queue.then(run); queue=next.catch(()=>{}); return next;
   }
   function plan(amount,count,type) {
     if(!Number.isSafeInteger(amount) || amount<1) throw new Error('Total inválido.');
@@ -173,7 +174,7 @@
   }
   function panel() {
     const data=summary();const esc=RaizPayments.escape;
-    return `<section class="card payment-settings"><h3>Pagamentos locais de demonstração</h3><p class="payment-notice">Registros do navegador. Não há banco de dados, banco financeiro ou gateway. Pedidos antigos sem transação local não compõem estes totais.</p>
+    return `<section class="card payment-settings"><h3>Pagamentos locais de demonstração</h3><p class="payment-notice">${RaizPresentation.source==='apresentacao'?'Simulações salvas no Supabase.':'Registros deste navegador.'} Sem cobrança bancária ou gateway. Pedidos antigos sem transação não compõem estes totais.</p>
       <div class="grid-3"><p><strong>Aprovados:</strong> ${money(data.paidCents)}</p><p><strong>Aguardando:</strong> ${money(data.pendingCents)}</p><p><strong>Estornados:</strong> ${money(data.refundedCents)}</p></div>
       <div class="payment-list">${data.transactions.map(t=>`<article class="card soft"><strong>Pedido #${Number(t.orderId)} · ${esc(STATUS[t.state])}</strong><p>${esc(t.method.label)} · ${money(t.amountCents)}</p><p class="small muted">${esc(t.reference)}</p></article>`).join('') || '<p>Nenhuma transação local registrada.</p>'}</div></section>`;
   }

@@ -2,7 +2,7 @@
 (() => {
   const PAGE = 12;
   const version = '2026-11-23';
-  const missing = error => ['PGRST202','42883'].includes(error?.code);
+  const missing = error => ['PGRST202','42883'].includes(error?.code) || (window.RaizDB?.isLocal && error?.status === 404);
   const cleanSearch = value => String(value || '').trim().slice(0,120).replace(/[,%()"'\\_*]/g,' ');
   const moneyCents = value => Math.round(Number(value) * 100);
   let capabilities = {};
@@ -31,7 +31,20 @@
     catch(error) { if (!missing(error)) throw error; capabilities = {}; }
     return capabilities;
   }
+  async function localRows(db,view,columns,options={}) {
+    let rows=(await execute(db.from(view).select(columns).limit(100))).data || [];
+    if(options.category)rows=rows.filter(r=>r.categoria===options.category);
+    if(options.status)rows=rows.filter(r=>r.status===options.status);
+    if(options.ids)rows=rows.filter(r=>options.ids.includes(r[options.idColumn || 'id']));
+    const term=cleanSearch(options.search).toLocaleLowerCase('pt-BR');
+    if(term)rows=rows.filter(r=>(options.searchColumns || ['nome']).some(k=>String(r[k] || '').toLocaleLowerCase('pt-BR').includes(term)));
+    return rows;
+  }
   async function page(db,view,columns,options={}) {
+    if(window.RaizDB.isLocal){
+      const rows=await localRows(db,view,columns,options),number=Math.max(0,Number(options.page)||0);
+      return {rows:rows.slice(number*PAGE,(number+1)*PAGE),total:rows.length,page:number};
+    }
     const number = Math.max(0,Number(options.page)||0);
     let request = db.from(view).select(columns,{count:'exact'});
     if (options.category) request=request.eq('categoria',options.category);
@@ -49,6 +62,7 @@
   }
   // Somente dados relacionais necessários ao carrinho/favoritos da própria conta.
   async function all(db,view,columns,order='id') {
+    if(window.RaizDB.isLocal)return localRows(db,view,columns);
     const rows=[];
     for(let offset=0;offset<10000;offset+=200) {
       const result=await execute(db.from(view).select(columns).order(order).range(offset,offset+199));
@@ -58,6 +72,7 @@
     throw new Error('Limite de segurança da consulta atingido');
   }
   async function related(db,view,columns,key,ids) {
+    if(window.RaizDB.isLocal)return (await localRows(db,view,columns)).filter(r=>ids.includes(r[key]));
     const result=[];
     const unique=[...new Set(ids)];
     for(let i=0;i<unique.length;i+=50) {
