@@ -19,17 +19,27 @@ try:
         for channel in ('msedge','chrome'):
             browser=p.chromium.launch(channel=channel)
             for width in (1440,390,360):
-                context=browser.new_context(viewport={'width':width,'height':960});errors=[]
+                context=browser.new_context(viewport={'width':width,'height':960},reduced_motion='reduce');errors=[]
                 def route(r):
                     if r.request.url.endswith('/config/vendor/supabase-2.119.2.js'):r.fulfill(body=mock,content_type='text/javascript')
                     elif r.request.url.startswith(base):r.continue_()
                     else:r.abort()
                 context.route('**/*',route);page=context.new_page();page.on('pageerror',lambda e:errors.append(str(e)))
-                page.goto(base);expect(page.locator('.store-product')).to_have_count(12)
+                page.goto(base);expect(page.locator('#storeProducts .store-product')).to_have_count(12)
                 assert 'login' not in page.url
-                assert page.locator('.store-product').first.bounding_box()['y']<750
+                assert page.locator('#storeProducts .store-product').first.bounding_box()['y']<750
                 assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1')
                 if channel=='msedge' and width in (1440,390):page.screenshot(path=str(out/f'catalogo-{width}.png'),full_page=True)
+                featured=page.locator('#storeProducts');featured.focus();featured.press('End');page.wait_for_function('()=>document.getElementById("storeProducts").scrollLeft>0')
+                featured.press('Home');page.wait_for_function('()=>document.getElementById("storeProducts").scrollLeft<=2')
+                page.locator('#storeHighlightControls button').last.click();page.wait_for_function('()=>document.getElementById("storeProducts").scrollLeft>0')
+                plant_rail=page.locator('#storeRail-plantas');expect(plant_rail.locator('.store-product')).to_have_count(12)
+                initial=featured.evaluate('(el)=>el.scrollLeft')
+                page.get_by_role('button',name='Próximos produtos de Plantas',exact=True).click();page.wait_for_function('()=>document.getElementById("storeRail-plantas").scrollLeft>0')
+                assert featured.evaluate('(el)=>el.scrollLeft')==initial
+                plant_rail.focus();plant_rail.press('End');expect(page.get_by_role('button',name='Próximos produtos de Plantas',exact=True)).to_be_disabled()
+                assert 'login' not in page.url
+                page.get_by_role('link',name='Ver catálogo completo',exact=True).click();expect(page.locator('#storeProducts .store-product')).to_have_count(12)
                 page.get_by_role('button',name='Próxima',exact=True).click();expect(page.locator('#storePagination')).to_contain_text('Página 2 de 13')
                 page.locator('#storeCategory').select_option('vasos');expect(page.locator('#storeProducts')).to_contain_text('Nenhum produto')
                 page.locator('#storeQuery').fill('Cacto fora dos cem');page.get_by_role('button',name='Buscar',exact=True).click()
@@ -67,7 +77,7 @@ try:
                 page.goto(base+'produto.html?id=9999');expect(page.get_by_role('heading',name='Produto não encontrado')).to_be_visible()
                 page.goto(base+'produto.html?id=abc');expect(page.get_by_role('link',name='Explorar produtos')).to_be_visible()
                 assert not errors,errors
-                results.append({'browser':channel,'width':width,'public_catalog':True,'public_product':True,'guest_cart':True,'google_redirect':True,'resume_without_order':True,'errors':errors})
+                results.append({'browser':channel,'width':width,'public_catalog':True,'carousels_buttons_keyboard_independence':True,'public_product':True,'guest_cart':True,'google_redirect':True,'resume_without_order':True,'errors':errors})
                 context.close()
             # Primeira compra: conta Google nova precisa informar o endereço.
             context=browser.new_context();context.route('**/*',route);page=context.new_page()

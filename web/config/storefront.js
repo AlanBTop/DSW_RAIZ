@@ -45,10 +45,45 @@
     const addButton=button('Adicionar',()=>add(product,1));addButton.disabled=product.estoque<1||!product.loja_id;actions.append(addButton);
     body.append(actions);card.append(picture,body);return card;
   }
+  function carousel(rail,previous,next,label){
+    rail._stopCarousel?.();
+    rail.classList.add('store-carousel');rail.setAttribute('role','region');rail.setAttribute('aria-roledescription','carrossel');rail.setAttribute('aria-label',label);rail.tabIndex=0;
+    function update(){const end=Math.max(0,rail.scrollWidth-rail.clientWidth);previous.disabled=rail.scrollLeft<=2;next.disabled=rail.scrollLeft>=end-2;}
+    function slide(direction){rail.scrollBy({left:direction*Math.max(1,rail.clientWidth*.85),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}
+    function keys(event){if(event.target!==rail||!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();if(event.key==='Home'||event.key==='End')rail.scrollTo({left:event.key==='Home'?0:rail.scrollWidth});else slide(event.key==='ArrowRight'?1:-1);}
+    previous.onclick=()=>slide(-1);next.onclick=()=>slide(1);
+    rail.addEventListener('scroll',update,{passive:true});rail.addEventListener('keydown',keys);
+    const resize=new ResizeObserver(update);resize.observe(rail);requestAnimationFrame(update);
+    rail._stopCarousel=()=>{resize.disconnect();rail.removeEventListener('scroll',update);rail.removeEventListener('keydown',keys);};
+  }
+  async function categoryCarousels(current){
+    const host=document.getElementById('storeCategoryCarousels');
+    host.querySelectorAll('.store-carousel').forEach(rail=>rail._stopCarousel?.());host.replaceChildren();
+    const sections=Object.entries(labels).map(([category,label])=>{
+      const section=node('section',undefined,'store-category-section'),head=node('div',undefined,'store-rail-heading');
+      const title=node('h2',label);title.id='storeCategoryTitle-'+category;
+      section.setAttribute('aria-labelledby',title.id);head.append(title,link('Ver todos',categoryUrl(category),'store-detail-link'));
+      const rail=node('div',undefined,'store-products');rail.id='storeRail-'+category;
+      const controls=node('div',undefined,'store-rail-buttons');
+      const previous=button('←',()=>{},'store-outline'),next=button('→',()=>{},'store-outline');
+      previous.setAttribute('aria-label','Produtos anteriores de '+label);next.setAttribute('aria-label','Próximos produtos de '+label);controls.append(previous,next);
+      const hint=node('p','Carregando produtos…','store-muted');section.append(head,rail,hint,controls);host.append(section);
+      return {category,label,rail,previous,next,hint};
+    });
+    await Promise.all(sections.map(async({category,label,rail,previous,next,hint})=>{
+      try {
+        const result=await RaizApi.page(db,'cliente_produtos',COLUMNS,{page:0,active:true,publicCatalog:true,category,order:'id',ascending:false});
+        if(current!==ticket)return;
+        rail.replaceChildren(...result.rows.map(productCard));hint.textContent=result.total?result.total+' produto(s) nesta categoria.':'Novos produtos em breve.';
+        carousel(rail,previous,next,label);
+      }catch(_){hint.textContent='Não foi possível carregar esta categoria. Use a busca para tentar novamente.';previous.disabled=next.disabled=true;}
+    }));
+  }
   async function catalog(){
     const current=++ticket;const grid=document.getElementById('storeProducts');grid.setAttribute('aria-busy','true');announce('Carregando produtos…');
     const search=(params.get('busca')||'').slice(0,120);const category=Object.hasOwn(labels,params.get('categoria'))?params.get('categoria'):'';
     const order=['recentes','menor-preco','maior-preco'].includes(params.get('ordem'))?params.get('ordem'):'recentes';const page=Math.max(0,Math.min(999,Math.floor(Number(params.get('pagina'))||0)));
+    const home=!search&&!category&&!params.has('catalogo')&&!params.has('pagina')&&!params.has('ordem');
     document.getElementById('storeCategory').value=category;document.getElementById('storeOrder').value=order;
     document.getElementById('catalogTitle').textContent=search?'Resultados para “'+search+'”':category?labels[category]:'Encontre seu próximo verde.';
     const result=await RaizApi.page(db,'cliente_produtos',COLUMNS,{page,active:true,publicCatalog:true,category,search,searchColumns:['nome','vendedor_nome'],order:order==='recentes'?'id':'preco',ascending:order==='menor-preco'});
@@ -57,6 +92,11 @@
     if(!result.rows.length)grid.append(node('p','Nenhum produto encontrado. Experimente outra busca ou categoria.','store-empty'));
     announce(result.total+' produto(s) encontrado(s).');
     const pages=Math.max(1,Math.ceil(result.total/RaizApi.PAGE));const pager=document.getElementById('storePagination');pager.replaceChildren();
+    document.getElementById('storeHighlightControls').hidden=!home;document.getElementById('storeFullCatalog').hidden=!home;pager.hidden=home;
+    const categories=document.getElementById('storeCategoryCarousels');categories.hidden=!home;
+    grid._stopCarousel?.();grid.classList.toggle('store-carousel',home);
+    if(home){carousel(grid,document.getElementById('storeHighlightPrev'),document.getElementById('storeHighlightNext'),'Produtos em destaque');void categoryCarousels(current);}
+    else {grid.removeAttribute('role');grid.removeAttribute('aria-roledescription');grid.removeAttribute('aria-label');grid.removeAttribute('tabindex');categories.querySelectorAll('.store-carousel').forEach(rail=>rail._stopCarousel?.());categories.replaceChildren();}
     function move(next){params.set('pagina',next);history.replaceState(null,'','?'+params);catalog().catch(fail);document.getElementById('catalogTitle').scrollIntoView({block:'start'});}
     const prev=button('Anterior',()=>move(page-1),'store-outline');prev.disabled=page===0;
     const next=button('Próxima',()=>move(page+1),'store-outline');next.disabled=page+1>=pages;

@@ -18,9 +18,12 @@
   <main id="storeContent" class="market-wrap store-main">
     <section aria-labelledby="catalogTitle">
       <div class="store-catalog-heading"><div><p class="store-eyebrow">MARKETPLACE RAIZ</p><h1 id="catalogTitle">Encontre seu próximo verde.</h1><p>Plantas, vasos e tudo para cultivar, de quem entende de cuidado.</p></div><div class="store-filters"><label>Categoria<select id="storeCategory"><option value="">Todas</option><option value="plantas">Plantas</option><option value="vasos">Vasos</option><option value="insumos">Insumos</option><option value="ferramentas">Ferramentas</option></select></label><label>Ordenar por<select id="storeOrder"><option value="recentes">Mais recentes</option><option value="menor-preco">Menor preço</option><option value="maior-preco">Maior preço</option></select></label></div></div>
+      <div id="storeHighlightControls" class="store-rail-heading" hidden><h2>Produtos em destaque</h2><div class="store-rail-buttons"><button id="storeHighlightPrev" class="store-outline" type="button" aria-label="Produtos anteriores em destaque">←</button><button id="storeHighlightNext" class="store-outline" type="button" aria-label="Próximos produtos em destaque">→</button></div></div>
       <div id="storeProducts" class="store-products" aria-busy="true"></div>
       <nav id="storePagination" class="store-pagination" aria-label="Páginas de produtos"></nav>
+      <p id="storeFullCatalog" hidden><a class="store-outline" href="index.html?catalogo=1">Ver catálogo completo</a></p>
     </section>
+    <div id="storeCategoryCarousels" class="store-category-carousels"></div>
     <aside class="store-discover"><div><p class="store-eyebrow">PLANTAS, PESSOAS E CUIDADO</p><h2>Seu espaço merece criar raízes.</h2><p>Conheça os cuidados de cada planta antes de escolher. Explore à vontade e entre na sua conta quando for comprar.</p><a href="sobre.html">Conheça a RAIZ →</a></div><img src="assets/vitrine-botanica.webp" width="960" height="960" loading="lazy" alt="Plantas em vasos em um ambiente iluminado"></aside>
     <noscript><p>Ative o JavaScript para consultar os produtos e montar seu carrinho.</p></noscript>
   </main>

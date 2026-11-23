@@ -520,7 +520,7 @@
         query('entregador_perfil','nome,veiculo,online,saldo_carteira,ganhos_hoje,total_corridas_hoje'),features.versao>=4?rpc('ofertas_pagina',{p_pagina:pages.ofertas||0}):rpc('ofertas'),
         query('entregador_corridas','id,status,etapa_atual,coleta_loja,coleta_endereco,entrega_endereco,item_descricao,fragil,valor'),
         query('entregador_historico','corrida_id,status,data_formatada'),
-        query('entregador_extrato_carteira','id,tipo,descricao,valor,status,data_formatada')
+        query('entregador_extrato','id,tipo,descricao,valor,status,data_formatada')
       ]);
       const account = section('Disponibilidade', 'disponibilidade', 'Início');
       const profile = profiles[0];
