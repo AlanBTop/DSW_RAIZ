@@ -4,6 +4,10 @@ A fonte de publicação é `web/`. O build `python scripts/build_render.py` copi
 
 A cópia `../RAIZOTIMIZADO/web/` usa os mesmos HTML, CSS, JavaScript, imagens e SDK. O arquivo `config/environment.js` mantém os exemplos habilitados apenas em loopback; `config/local-client.js` e o servidor Python são exclusivos da execução autenticada local. No Render, os quatro perfis exigem login e parâmetros de demonstração não liberam acesso.
 
+## Integração de atualização automática
+
+Em 23/11/2026, a instalação Render no GitHub foi autorizada também para `AlanBTop/DSW_RAIZ`, preservando a autorização existente do RADACHE. O serviço `dsw-raiz` foi vinculado ao repositório por Git Provider, na branch `main`, com build `python3 scripts/build_render.py` e publicação de `dist/`. Antes dessa correção, o repositório era lido como público e os pushes não iniciavam os deploys, apesar da indicação de Auto-Deploy. A publicação deve ser acompanhada no histórico do Render até o estado `live`.
+
 ## Atualizar após editar localmente
 
 Execute `ATUALIZAR_RENDER.bat` em RAIZOTIMIZADO ou, neste repositório:
