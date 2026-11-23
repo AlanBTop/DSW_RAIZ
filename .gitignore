@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+.dados*/
+.venv*/
+__pycache__/
+*.pyc
+*.jks
+*.keystore
+key.properties
+node_modules/
+artifacts/
+supabase/.temp/
+environments/*.local.json
+
+tests/resultado_*.json
+

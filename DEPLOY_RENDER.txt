@@ -1,0 +1,26 @@
+RAIZ Web no Render
+
+Fonte: RAIZ_WEB_REVISAO_20261123/fontes/.sites-checkout
+Commit de origem: a0c49f4 (23/11/2026 11:23 -04:00).
+Esta cópia foi isolada para publicar apenas a versão web.
+
+Tipo: Static Site
+Branch: main
+Build Command: python3 scripts/build_render.py
+Publish Directory: dist
+SKIP_INSTALL_DEPS=true
+
+O build gera somente a configuração pública de produção e verifica os arquivos.
+Não executa migrations, não cria outro banco e não altera dados do Supabase.
+Não configure rewrite global para index.html: o site contém várias páginas e
+precisa devolver 404 para endereços inexistentes.
+
+Os cabeçalhos em dist/_headers precisam ser cadastrados nas configurações do
+Render: esse arquivo não é importado automaticamente pelo Render.
+render-headers.json contém os mesmos valores em formato estruturado.
+
+Após obter a URL HTTPS, configure no Supabase Auth o Site URL e os retornos
+exatos de login.html e recuperar-senha.html. Veja docs/OPERACAO.md para as
+dependências existentes de autenticação, e-mail e funções do Supabase.
+Os testes locais de navegador usam respostas simuladas e não comprovam login
+ou operações reais no Supabase remoto.

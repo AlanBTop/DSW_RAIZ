@@ -1,0 +1,37 @@
+﻿[
+    {
+        "path":  "/*",
+        "name":  "Cache-Control",
+        "value":  "no-store"
+    },
+    {
+        "path":  "/*",
+        "name":  "X-Content-Type-Options",
+        "value":  "nosniff"
+    },
+    {
+        "path":  "/*",
+        "name":  "Referrer-Policy",
+        "value":  "strict-origin-when-cross-origin"
+    },
+    {
+        "path":  "/*",
+        "name":  "X-Frame-Options",
+        "value":  "DENY"
+    },
+    {
+        "path":  "/*",
+        "name":  "Permissions-Policy",
+        "value":  "camera=(), microphone=(), geolocation=()"
+    },
+    {
+        "path":  "/*",
+        "name":  "Strict-Transport-Security",
+        "value":  "max-age=31536000"
+    },
+    {
+        "path":  "/*",
+        "name":  "Content-Security-Policy",
+        "value":  "default-src \u0027self\u0027; script-src \u0027self\u0027 \u0027unsafe-hashes\u0027 \u0027sha256-/GJubFiP+EYV7qE7X/ACBpNt62GL5/5o86zBwrA8bdw=\u0027 \u0027sha256-3SgL1Ym/As+YXsxGeguMfxN5HF/ppSzDYJHRD0Yy51o=\u0027 \u0027sha256-62LRgYNW2DJ9WvsqCO0UNGRKGzlP7gJIuELve4Diqfg=\u0027 \u0027sha256-Apa+eD0AUZfaI5htoMjikl/RY6gN/HdHO7zKJN7991k=\u0027 \u0027sha256-EplRDDNcW6ekNMWk585xKxCEjzpmQBpCXUdltvfVZYY=\u0027 \u0027sha256-FOpagc5Ukk4D/cLuu9mN+duka35CiymPNWMqekor8yI=\u0027 \u0027sha256-FdHyCfw5CPM8CtdIi4SQYTe2z7GHRVm/bs0aytULx0E=\u0027 \u0027sha256-JhvU3A3XMCVnXh/ADVoXa3yAd0e8qpxIliRfxNw5qwQ=\u0027 \u0027sha256-LhrrhDyq6HNFcI521O0Am6iC+GYn22PHmAWPCt2lb/4=\u0027 \u0027sha256-OSUz+iHCfwgsKZdlHF6kSI5dCdsHc5rgR8QdoCMI980=\u0027 \u0027sha256-OXqjjmv8hsJ7lR+n3ceuDu6KBNh8WlE7+5+vLocG1f4=\u0027 \u0027sha256-QQyKX+ChzBHRSO90Mhd8cMsptQ+0f7vKYbY4BiVlmBI=\u0027 \u0027sha256-SluJoCEJ20Rcxj8Pr7z5FQR6ca2rE9l4Ont8yk/jvWM=\u0027 \u0027sha256-UcNeJuNv/usB1sEjw5T7iMLSzFKLC7uh8CgwT02eBkM=\u0027 \u0027sha256-XaUdssFpy81utSAsEOXdb076tQ7oyfPApmzVqur+Vvo=\u0027 \u0027sha256-aCaNZmnCJMrzRAL+1qoix9sag9KMm4SvNrYmM7gASh0=\u0027 \u0027sha256-jhidhj42oRrYAY96QlV84k+K/bXgR2Sk4FW68KvsG94=\u0027 \u0027sha256-kqCL5SZOfDfKEpqt4U2K7vB1nhzxjWYmpVY8gPWWPoY=\u0027 \u0027sha256-lLU2cjTfC6XBr6igXC5JVFv1wORWl4/8OcUDyEHVEw8=\u0027 \u0027sha256-mszmA8QLytk5RtfAG3d8pyPfgUn5QJdMKiP09AWIoY4=\u0027 \u0027sha256-nd0LzDrNmFDVNG5Be1J4/E4jJ1GpAJ4ZtPd6KEbyO0o=\u0027 \u0027sha256-q7IMuwborvC34AW6bZkKSB7RRmk+COcuI8890jGi2R4=\u0027 \u0027sha256-vcj0l/D+OKNFPEhaU2zBAEmJq3LBWbB87M9yQcTAzHM=\u0027 \u0027sha256-yojxyDq1EUkdADr522ZPoY0jbeNWEPo5N6Tbp8hdXJ4=\u0027; style-src \u0027self\u0027 \u0027unsafe-inline\u0027 https://fonts.googleapis.com; font-src \u0027self\u0027 https://fonts.gstatic.com; img-src \u0027self\u0027 data: https://images.unsplash.com; connect-src \u0027self\u0027 https://*.supabase.co wss://*.supabase.co; object-src \u0027none\u0027; base-uri \u0027self\u0027; frame-ancestors \u0027none\u0027; form-action \u0027self\u0027"
+    }
+]

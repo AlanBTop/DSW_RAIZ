@@ -1,0 +1,16 @@
+{
+  "name": "RAIZ Cliente — Marketplace de Plantas",
+  "short_name": "RAIZ Cliente",
+  "description": "Compre plantas, vasos, substratos e ferramentas botânicas com entrega rápida.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F8FAF8",
+  "theme_color": "#1B4332",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='16' fill='%231B4332'/><text x='50%' y='55%' font-size='36' text-anchor='middle' dominant-baseline='middle'>🪴</text></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

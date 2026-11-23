@@ -1,0 +1,171 @@
+body {
+  font-family: var(--raiz-font);
+  background: #edf4eb;
+  padding: 24px 16px;
+}
+
+.login-container {
+  max-width: 970px;
+  display: grid;
+  grid-template-columns: minmax(0,.85fr) minmax(0,1.15fr);
+  padding: 0;
+  border-radius: 22px;
+}
+
+.login-side,.login-pane {
+  min-width: 0;
+  padding: clamp(20px,4vw,42px);
+}
+
+.login-side {
+  background: #e4efe3;
+  border-right: 1px solid var(--raiz-border);
+}
+
+.login-side .brand-header {
+  text-align: left;
+  margin-bottom: 32px;
+}
+
+.login-side .brand-title,.login-pane h2 {
+  font: 400 clamp(2rem,4vw,3.1rem)/1.05 var(--raiz-display);
+  color: var(--raiz-dark);
+}
+
+.login-pane h2 {
+  margin-bottom: 22px;
+}
+
+.login-side .role-section-label {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.login-side .role-selector {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 10px;
+}
+
+.login-side .role-card {
+  display: grid;
+  justify-items: start;
+  text-align: left;
+  padding: 12px;
+  min-width: 0;
+  min-height: 94px;
+}
+
+.login-side .role-desc {
+  white-space: normal;
+}
+
+.login-side .role-card.active {
+  background: #f7fbf6;
+}
+
+.login-pane .demo-box {
+  margin-top: 20px;
+}
+
+.login-pane .demo-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.login-pane .demo-chip {
+  flex: 1;
+  min-width: 80px;
+  font: inherit;
+  font-size: .8rem;
+}
+
+.login-pane .mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  text-align: left;
+}
+
+.login-pane #toggleLink {
+  background: #edf5eb;
+  color: var(--raiz-dark);
+  margin: 0;
+}
+
+.login-pane #accessMessage:not(:empty) {
+  margin: 12px 0;
+  padding: 12px;
+  border-radius: 8px;
+  background: #edf5eb;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+
+.login-pane .footer-links {
+  text-align: left;
+}
+
+@media(max-width:680px) {
+  body {
+    padding: 12px;
+  }
+  .login-container {
+    grid-template-columns: 1fr;
+  }
+  .login-side,.login-pane {
+    padding: 18px;
+  }
+  .login-side {
+    border: 0;
+    border-bottom: 1px solid var(--raiz-border);
+  }
+  .login-side .brand-header {
+    margin-bottom: 16px;
+  }
+  .login-side .logo-badge {
+    width: 42px;
+    height: 42px;
+    margin-bottom: 6px;
+  }
+  .login-side .role-card {
+    min-height: 64px;
+    padding: 8px;
+  }
+  .login-side .role-icon {
+    font-size: 1.1rem;
+  }
+  .login-side .role-desc {
+    display: none;
+  }
+  .login-side .role-selector {
+    margin-bottom: 0;
+  }
+}
+
+.login-photo {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3/2;
+  object-fit: cover;
+  margin: 25px 0 0;
+  border-radius: 14px;
+}
+
+.login-pane .divider span,.login-pane .field-hint {
+  color: #50665a;
+}
+
+.login-pane #registerFields > p {
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+@media(max-width:680px) {
+  .login-photo {
+    display: none;
+  }
+}
