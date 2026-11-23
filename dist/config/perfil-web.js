@@ -291,10 +291,21 @@
         query('cliente_pedidos','id,data_formatada,status,total,frete,forma_pagamento,avaliacao_nota,avaliacao_comentario'+(features.recebimento?',recebimento_confirmado_em':'')),
         Promise.resolve([])
       ]);
+      let shoppingNotice='';
+      if(window.RaizShopping?.intent()) {
+        if(profile.length) {
+          try {if(await RaizShopping.resume(db,cart)){location.hash='carrinho';return customer();}}
+          catch(error){shoppingNotice=RaizApi.errorText(error);}
+        } else {
+          shoppingNotice='Sua seleção está salva. Cadastre o endereço para continuar a compra.';
+          location.hash='conta';
+        }
+      }
       setIdentity(profile[0]?.nome);
       items.push(...await RaizApi.related(db,'cliente_itens_pedido','id,pedido_id,produto_nome,quantidade,preco_unitario','pedido_id',orders.map(o=>o.id)));
       const cartProducts=await RaizApi.related(db,'cliente_produtos','id,nome,preco,estoque,loja_id','id',cart.map(i=>i.produto_id));
       const catalog = section('Catálogo', 'catalogo', 'Buscar');
+      if(shoppingNotice) catalog.append(el('p',shoppingNotice,'raiz-notice'));
       const favoritesShortcut = el('a', 'Favoritos', 'nav-btn');
       favoritesShortcut.href = '#catalogo';
       favoritesShortcut.dataset.section = 'favoritos';
@@ -356,6 +367,7 @@
       filters.append(button('Buscar',searchServer));
       filter();pager(catalog,'catalog',catalogResult.total);
       const basket = section('Carrinho', 'carrinho');
+      if(shoppingNotice) basket.append(el('p',shoppingNotice,'raiz-notice'));
       const basketLayout = el('div', null, 'raiz-basket-layout');
       const lines = el('div', null, 'raiz-cart-lines');
       basketLayout.append(lines);
@@ -424,7 +436,7 @@
       if (profile.length) address.append(el('p',[profile[0].nome,profile[0].telefone].filter(Boolean).join(' · ')));
       if (profile[0]?.endereco && RaizMaps.search(profile[0].endereco)) address.append(mapLink(RaizMaps.search(profile[0].endereco),'Ver endereço no Google Maps'));
       const [addressLabel, addressInput] = field('Endereço completo','text',profile[0]?.endereco);
-      if (!profile.length) address.append(el('p','Salve seu endereço para liberar favoritos, carrinho e pedidos.'));
+      if (!profile.length) address.append(el('p',shoppingNotice || 'Salve seu endereço para liberar favoritos, carrinho e pedidos.'));
       address.append(addressLabel, action('Salvar endereço', () => rpc('endereco',{p_endereco:addressInput.value})));
     }
 

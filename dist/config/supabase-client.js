@@ -84,8 +84,8 @@
     } catch (_) { return false; }
   }
 
-  function getClient() {
-    if (localClient) return localClient;
+  function getClient(options = {}) {
+    if (localClient && !options.publicCatalog) return localClient;
     if (!isConfigured()) return null;
     if (supabaseClient) return supabaseClient;
 

@@ -17,7 +17,7 @@ erDiagram
 
 Pedidos de cliente, vendedor e corrida compartilham um ID gerado no checkout; essa correspondência é mantida pelas RPCs transacionais, não por FK entre as três tabelas. Cada lista tem view pública com `security_invoker=true`; tabelas usam RLS. Nenhum app escreve diretamente em pedidos, estoque, perfis de acesso ou saldo.
 
-Navegação web: portal → login/cadastro/recuperação → área da persona. Cliente: catálogo, carrinho, pedidos, endereço e privacidade. Vendedor: loja, produtos, pedidos e privacidade. Entregador: disponibilidade, entregas, ofertas, histórico e privacidade. Admin: usuários, moderação, pedidos, entregas, exclusões e eventos. Documentos públicos: termos, privacidade e exclusão.
+Navegação web: vitrine pública → detalhes do produto / carrinho visitante → login (Google ou e-mail) ao comprar → revisão autenticada / endereço → confirmação explícita do pedido. A página institucional fica em `sobre.html`. Cliente: catálogo, carrinho, pedidos, endereço e privacidade. Vendedor: loja, produtos, pedidos e privacidade. Entregador: disponibilidade, entregas, ofertas, histórico e privacidade. Admin: usuários, moderação, pedidos, entregas, exclusões e eventos. Documentos públicos: termos, privacidade e exclusão.
 
 Cliente `Confirmado` → `Em preparação` → `Em transporte` → `Entregue`, com confirmação posterior em `recebimento_confirmado_em`. Cancelamento é terminal e devolve estoque. Avaliação pertence ao pedido de uma única loja e exige recebimento confirmado.
 

@@ -4,7 +4,7 @@ window.RaizEnvironment=Object.freeze({
   "localOnly": false,
   "allowPresentation": false,
   "allowLocalAdapter": false,
-  "googleOAuth": false,
+  "googleOAuth": true,
   "supabaseUrl": "https://rlftmxxqlfyvfsgjtsdd.supabase.co",
   "publishableKey": "sb_publishable_vUgoDIVkkV5jQM6If1tZmw_5pKl6Niw"
 });

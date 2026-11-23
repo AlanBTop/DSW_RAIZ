@@ -1,59 +1,35 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#1B4332">
-  <meta name="description" content="Conheça a RAIZ, um projeto de marketplace que aproxima quem cultiva, quem vende e quem entrega plantas e insumos.">
-  <title>Sobre a RAIZ — Plantas, pessoas e cuidado</title>
+  <meta name="description" content="Explore plantas, vasos, insumos e ferramentas na RAIZ. Conheça os produtos e monte seu carrinho sem precisar de uma conta.">
+  <title>RAIZ — Plantas, vasos e tudo para cultivar</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="config/raiz-web.css">
   <link rel="stylesheet" href="config/vitrine.css">
-  <link rel="stylesheet" href="config/sobre.css">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/config/legal.css">
+  <link rel="stylesheet" href="config/storefront.css">
 </head>
-<body class="vitrine">
-  <a class="raiz-skip" href="#conteudo">Ir para o conteúdo</a>
-  <header class="market-header">
-    <div class="market-wrap about-bar">
-      <a class="market-logo" href="index.html" aria-label="RAIZ — sobre o projeto"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M31 51C22 37 15 28 5 18c11-2 22 1 28 9 2 4 2 9-2 24Z" fill="#2D6A4F"/><path d="M33 50c1-19 5-31 20-39 3 13 0 24-7 30-4 4-8 6-13 9Z" fill="#52B788"/><path d="M31 27v29" stroke="#1B4332" stroke-width="3.4" stroke-linecap="round"/></svg><strong>RAIZ</strong></a>
-      <nav class="market-nav" aria-label="Navegação principal"><a href="#sobre" aria-current="page">Sobre a RAIZ</a><a href="#como-funciona">Como funciona</a><a href="#perfis">Nossos perfis</a></nav>
-      <a class="raiz-button" href="cliente/index.html?fonte=local">Explorar o catálogo</a>
-    </div>
-  </header>
-  <main id="conteudo" class="market-wrap">
-    <p id="fileNotice" class="about-notice" hidden>Você abriu o arquivo diretamente. Para usar carrinho, perfis e pedidos com persistência, inicie o servidor local e acesse <strong>http://localhost:3000/</strong>. Consulte o guia de execução na pasta de entrega.</p>
-    <section id="sobre" class="market-hero about-hero" aria-labelledby="aboutTitle">
-      <div class="market-hero-copy"><span class="about-eyebrow">Sobre a RAIZ</span><h1 id="aboutTitle">Cultivar aproxima pessoas.</h1><p>A RAIZ nasceu para reunir plantas, insumos e quem entende de cuidado em um mesmo lugar. Nosso projeto conecta clientes, vendedores e entregadores em uma jornada de compra acompanhada do começo ao fim.</p><a class="raiz-button" href="cliente/index.html?fonte=local">Conhecer o marketplace</a><a class="about-secondary" href="#como-funciona">Entenda a proposta</a></div>
-      <img src="assets/vitrine-botanica.webp" width="960" height="960" alt="Imagem ilustrativa de plantas em vasos em um ambiente iluminado">
+<body class="store-page" data-store-page="catalog">
+  <a class="raiz-skip" href="#storeContent">Ir para os produtos</a>
+  <header id="storeHeader" class="store-header"></header>
+  <div class="market-wrap"><p id="storeStatus" class="store-status" role="status" aria-live="polite"></p></div>
+  <main id="storeContent" class="market-wrap store-main">
+    <section aria-labelledby="catalogTitle">
+      <div class="store-catalog-heading"><div><p class="store-eyebrow">MARKETPLACE RAIZ</p><h1 id="catalogTitle">Encontre seu próximo verde.</h1><p>Plantas, vasos e tudo para cultivar, de quem entende de cuidado.</p></div><div class="store-filters"><label>Categoria<select id="storeCategory"><option value="">Todas</option><option value="plantas">Plantas</option><option value="vasos">Vasos</option><option value="insumos">Insumos</option><option value="ferramentas">Ferramentas</option></select></label><label>Ordenar por<select id="storeOrder"><option value="recentes">Mais recentes</option><option value="menor-preco">Menor preço</option><option value="maior-preco">Maior preço</option></select></label></div></div>
+      <div id="storeProducts" class="store-products" aria-busy="true"></div>
+      <nav id="storePagination" class="store-pagination" aria-label="Páginas de produtos"></nav>
     </section>
-    <section class="market-section about-purpose" aria-labelledby="purposeTitle"><div><span class="about-eyebrow">Nossa proposta</span><h2 id="purposeTitle">Mais fácil encontrar. Mais simples cuidar.</h2></div><div><p>Comprar uma planta envolve escolher a espécie, entender seus cuidados e receber o produto em boas condições. A RAIZ organiza essas informações e aproxima as etapas que costumam ficar espalhadas.</p><p>No catálogo, você encontra plantas, vasos, substratos, sementes e ferramentas. Na área de pedidos, acompanha o preparo e a entrega. Cada perfil participa de uma parte dessa experiência.</p></div></section>
-    <section id="como-funciona" class="market-section market-help" aria-labelledby="howTitle"><span class="about-eyebrow">Da escolha à entrega</span><h2 id="howTitle">Como a RAIZ funciona</h2><div class="market-steps"><article><span class="about-step">01</span><h3>Encontre o que quer cultivar</h3><p>Explore produtos, compare preços e veja cuidados, variações e disponibilidade no catálogo.</p></article><article><span class="about-step">02</span><h3>Monte seu pedido</h3><p>Escolha os itens, confira endereço e frete estimado e revise o resumo antes de continuar.</p></article><article><span class="about-step">03</span><h3>Acompanhe cada etapa</h3><p>O vendedor prepara o pedido, o entregador registra a entrega e o cliente acompanha o andamento.</p></article></div></section>
-    <section id="perfis" class="market-section" aria-labelledby="profileTitle"><div class="market-section-head"><div><span class="about-eyebrow">Um projeto, quatro perspectivas</span><h2 id="profileTitle">Quem faz parte dessa jornada</h2></div></div><p>Conheça o papel de cada perfil. Os acessos abaixo abrem a apresentação local com dados fictícios, sem exigir login.</p><div class="market-profiles"><article><span class="about-code">UC</span><h3>Cliente</h3><p>Busca produtos, escolhe variações, monta o carrinho e acompanha seus pedidos.</p><a href="cliente/index.html?fonte=local" aria-label="Abrir demonstração do cliente">Conhecer a área do cliente</a></article><article><span class="about-code">UP</span><h3>Vendedor</h3><p>Organiza produtos e estoque e acompanha o preparo dos pedidos da loja.</p><a href="vendedor/index.html?fonte=local" aria-label="Abrir demonstração do vendedor">Conhecer a área do vendedor</a></article><article><span class="about-code">UE</span><h3>Entregador</h3><p>Consulta coletas disponíveis e atualiza o percurso e a conclusão das entregas.</p><a href="entregador/index.html?fonte=local" aria-label="Abrir demonstração do entregador">Conhecer a área do entregador</a></article><article><span class="about-code">UA</span><h3>Administrador</h3><p>Consulta indicadores e acompanha os dados da operação.</p><a href="admin/index.html?fonte=local" aria-label="Abrir demonstração do administrador">Conhecer a administração</a></article></div></section>
-    <section class="market-section about-state" aria-labelledby="stateTitle"><div><span class="about-eyebrow">Projeto acadêmico em desenvolvimento</span><h2 id="stateTitle">Experimente a versão local.</h2><p>Esta versão demonstra a experiência do marketplace. Produtos, avaliações iniciais e pagamentos são exemplos; nenhum dinheiro é cobrado. As alterações ficam neste navegador.</p><p>A integração dos novos recursos com o Supabase e a preparação do deploy são a próxima etapa. A apresentação sem login não comprova autenticação ou permissões reais.</p><a class="raiz-button" href="cliente/index.html?fonte=local">Abrir demonstração</a></div><details class="market-demo"><summary>Ferramentas da apresentação</summary><p>Comece uma compra de exemplo ou restaure os dados fictícios deste navegador. A restauração apaga os pedidos e cadastros locais da demonstração.</p><button class="raiz-button" onclick="simulateFullOrder()">Iniciar pedido de exemplo</button><button class="raiz-button raiz-secondary" onclick="resetDemoData()">Restaurar demonstração local</button></details></section>
+    <aside class="store-discover"><div><p class="store-eyebrow">PLANTAS, PESSOAS E CUIDADO</p><h2>Seu espaço merece criar raízes.</h2><p>Conheça os cuidados de cada planta antes de escolher. Explore à vontade e entre na sua conta quando for comprar.</p><a href="sobre.html">Conheça a RAIZ →</a></div><img src="assets/vitrine-botanica.webp" width="960" height="960" loading="lazy" alt="Plantas em vasos em um ambiente iluminado"></aside>
+    <noscript><p>Ative o JavaScript para consultar os produtos e montar seu carrinho.</p></noscript>
   </main>
-  <footer class="market-footer"><div class="market-wrap"><div><strong>RAIZ</strong><p>Plantas, pessoas e cuidado.</p></div><nav aria-label="Rodapé"><a href="privacidade.html">Privacidade</a><a href="termos.html">Termos</a><a href="excluir-conta.html">Excluir conta</a><a href="mailto:suporteraiz.mkt@hotmail.com">Suporte</a><a href="#sobre">Sobre o projeto</a><a href="#perfis">Perfis da demonstração</a><a href="login.html?modo=online&amp;role=cliente">Acesso autenticado · integração pendente de revisão</a></nav><span>Versão local acadêmica</span></div></footer>
+  <footer id="storeFooter" class="store-footer"></footer>
   <script src="config/environment.js"></script>
-  <script>
-    document.getElementById('fileNotice').hidden=location.protocol!=='file:';
-    const presentation = window.RaizEnvironment?.mode==='presentation' && window.RaizEnvironment?.allowPresentation===true && (['localhost','127.0.0.1','[::1]'].includes(location.hostname)||location.protocol==='file:');
-    if (!presentation) {
-      document.querySelectorAll('a[href*="fonte=local"]').forEach(link=>{
-        const url=new URL(link.href);url.searchParams.delete('fonte');url.searchParams.set('modo','online');
-        link.href=url.href;
-        if(link.getAttribute('aria-label')?.includes('demonstração')) link.setAttribute('aria-label',link.getAttribute('aria-label').replace('demonstração','área'));
-      });
-      document.querySelector('#perfis > p').textContent='Entre com sua conta para acessar os recursos disponíveis para o seu perfil.';
-      document.querySelector('.market-demo').hidden=true;
-      document.querySelector('.about-state > div').innerHTML='<span class="about-eyebrow">Marketplace RAIZ</span><h2 id="stateTitle">Seu próximo cultivo começa aqui.</h2><p>Entre na sua conta para consultar o catálogo, organizar seus pedidos e acompanhar cada etapa.</p><p>Projeto acadêmico. O registro de pedidos não realiza cobrança ou transferência bancária.</p><a class="raiz-button" href="login.html?modo=online&amp;role=cliente">Entrar na sua conta</a>';
-      document.querySelector('.market-footer .market-wrap > span').textContent='Projeto acadêmico RAIZ';
-      document.querySelectorAll('.market-footer a').forEach(link=>{
-        if(link.textContent.includes('Perfis da demonstração')) link.textContent='Acessar perfis';
-        if(link.href.includes('login.html')) link.textContent='Entrar na sua conta';
-      });
-    }
-    function simulateFullOrder(){if(presentation)location.href='cliente/index.html?fonte=local&acao=checkout';}
-    function resetDemoData(){if(!presentation)return;if(!confirm('Apagar os dados fictícios desta demonstração no navegador? Esta ação não pode ser desfeita.'))return;Object.keys(localStorage).filter(k=>k.startsWith('raiz_demo_')||k.startsWith('raiz_local_')).forEach(k=>localStorage.removeItem(k));localStorage.removeItem('raiz_apresentacao_sessao');localStorage.setItem('raiz_fonte','local');location.reload();}
-  </script>
+  <script src="config/vendor/supabase-2.119.2.js"></script>
+  <script src="config/supabase-client.js"></script>
+  <script src="config/api-web.js"></script>
+  <script src="config/shopping-intent.js"></script>
+  <script src="config/storefront.js"></script>
 </body>
 </html>

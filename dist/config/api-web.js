@@ -33,6 +33,7 @@
   }
   async function localRows(db,view,columns,options={}) {
     let rows=(await execute(db.from(view).select(columns).limit(100))).data || [];
+    if(options.active!==undefined)rows=rows.filter(r=>r.ativo===options.active);
     if(options.category)rows=rows.filter(r=>r.categoria===options.category);
     if(options.status)rows=rows.filter(r=>r.status===options.status);
     if(options.ids)rows=rows.filter(r=>options.ids.includes(r[options.idColumn || 'id']));
@@ -41,12 +42,13 @@
     return rows;
   }
   async function page(db,view,columns,options={}) {
-    if(window.RaizDB.isLocal){
+    if(window.RaizDB.isLocal && !options.publicCatalog){
       const rows=await localRows(db,view,columns,options),number=Math.max(0,Number(options.page)||0);
       return {rows:rows.slice(number*PAGE,(number+1)*PAGE),total:rows.length,page:number};
     }
     const number = Math.max(0,Number(options.page)||0);
     let request = db.from(view).select(columns,{count:'exact'});
+    if (options.active!==undefined) request=request.eq('ativo',options.active);
     if (options.category) request=request.eq('categoria',options.category);
     if (options.status) request=request.eq('status',options.status);
     if (options.ids) {

@@ -2,16 +2,16 @@
 (() => {
   const role=()=>sessionStorage.getItem('qaRole');
   const user=()=>role()?{id:role()==='cliente'?'buyer':role(),email:role()+'@teste.invalid'}:null;
-  const state={accepted:[],requests:[],events:[],queries:[],rpc:[],orders:[
+  const state={cart:[{id:1,produto_id:137,quantidade:1}],accepted:[],requests:[],events:[],queries:[],rpc:[],orders:[
     {id:900,status:'Entregue',total:35.50,frete:15,forma_pagamento:'Sem pagamento integrado',data_formatada:'23/11/2026',recebimento_confirmado_em:null},
     {id:901,status:'Confirmado',total:25.25,frete:15,forma_pagamento:'Sem pagamento integrado',data_formatada:'23/11/2026'}
   ]};window.__qa=state;
   const products=Array.from({length:150},(_,i)=>({id:i+1,nome:i===136?'Cacto fora dos cem':'Planta '+String(i+1).padStart(3,'0'),categoria:'plantas',vendedor_nome:'Loja QA',preco:10.25,estoque:5,descricao:'Descrição de teste',loja_id:1,emoji:'🌿',ativo:true}));
-  function data(view){return ({cliente_produtos:products,cliente_usuarios:[{id:'buyer',nome:'Cliente QA',telefone:'Telefone fictício',endereco:'Endereço fictício'}],cliente_favoritos:[{id:1,produto_id:137}],cliente_carrinho:[{id:1,produto_id:137,quantidade:1}],cliente_pedidos:state.orders,cliente_itens_pedido:[{id:1,pedido_id:900,produto_nome:'Cacto fora dos cem',produto_id:137,quantidade:2,preco_unitario:10.25}],vendedor_lojas:[{id:1,nome:'Loja QA',endereco:'Coleta fictícia',rating:5}],vendedor_produtos:products,vendedor_pedidos:[{id:900,status:'Pendente',total:35.5,data_pedido:'hoje',cliente_nome:'Cliente QA'}],vendedor_itens_pedido:[],entregador_perfil:[{id:1,nome:'Entregador QA',veiculo:'Bicicleta',online:true}],entregador_corridas:[{id:900,status:'Em andamento',etapa_atual:1,coleta_loja:'Loja QA',coleta_endereco:'Coleta fictícia',entrega_endereco:'Destino fictício',item_descricao:'Plantas',valor:15,fragil:true}],entregador_historico:[],raiz_aceites:state.accepted,raiz_solicitacoes_privacidade:state.requests,raiz_eventos_operacao:state.events})[view]||[];}
+  function data(view){return ({cliente_produtos:products,cliente_usuarios:sessionStorage.getItem('qaNewCustomer')?[]:[{id:'buyer',nome:'Cliente QA',telefone:'Telefone fictício',endereco:'Endereço fictício'}],cliente_favoritos:[{id:1,produto_id:137}],cliente_carrinho:state.cart,cliente_pedidos:state.orders,cliente_itens_pedido:[{id:1,pedido_id:900,produto_nome:'Cacto fora dos cem',produto_id:137,quantidade:2,preco_unitario:10.25}],vendedor_lojas:[{id:1,nome:'Loja QA',endereco:'Coleta fictícia',rating:5}],vendedor_produtos:products,vendedor_pedidos:[{id:900,status:'Pendente',total:35.5,data_pedido:'hoje',cliente_nome:'Cliente QA'}],vendedor_itens_pedido:[],entregador_perfil:[{id:1,nome:'Entregador QA',veiculo:'Bicicleta',online:true}],entregador_corridas:[{id:900,status:'Em andamento',etapa_atual:1,coleta_loja:'Loja QA',coleta_endereco:'Coleta fictícia',entrega_endereco:'Destino fictício',item_descricao:'Plantas',valor:15,fragil:true}],entregador_historico:[],raiz_aceites:state.accepted,raiz_solicitacoes_privacidade:state.requests,raiz_eventos_operacao:state.events})[view]||[];}
   function query(view){let filters=[],start=0,end=1000,sort='id',ascending=true;return {
     select(){return this;},eq(k,v){filters.push(r=>r[k]===v);return this;},in(k,vs){filters.push(r=>vs.includes(r[k]));return this;},
     or(text){const matches=[...text.matchAll(/(\w+)\.ilike\.%([^%]*)%/g)];filters.push(r=>matches.some(m=>String(r[m[1]]||'').toLowerCase().includes(m[2].toLowerCase())));return this;},
-    order(key,options={}){sort=key;ascending=options.ascending!==false;return this;},range(a,b){start=a;end=b;return this;},abortSignal(){return this;},
+    order(key,options={}){sort=key;ascending=options.ascending!==false;return this;},range(a,b){start=a;end=b;return this;},limit(n){end=start+n-1;return this;},abortSignal(){return this;},
     then(resolve,reject){let result=data(view).filter(r=>filters.every(fn=>fn(r)));result=[...result].sort((a,b)=>(a[sort]>b[sort]?1:a[sort]<b[sort]?-1:0)*(ascending?1:-1));state.queries.push({view,start,end,filtered:result.length});return Promise.resolve({data:result.slice(start,end+1),count:result.length,error:null}).then(resolve,reject);}
   };}
   async function rpc(name,args={}){
@@ -40,6 +40,12 @@
       tx.estado={approve:'paid',reject:'rejected',retry:'pending',cancel:'cancelled',refund:'refunded'}[args.p_acao] || tx.estado;
       tx.eventos.push({em:new Date().toISOString(),acao:args.p_acao});
     }
+    else if(name==='raiz_endereco')sessionStorage.removeItem('qaNewCustomer');
+    else if(name==='raiz_item_cliente'){
+      const row=state.cart.find(r=>r.produto_id===args.p_produto);
+      if(row)row.quantidade=args.p_quantidade;
+      else state.cart.push({id:state.cart.length+1,produto_id:args.p_produto,quantidade:args.p_quantidade});
+    }
     else if(name==='raiz_checkout')result=902;
     return {data:result,error:null};
   }
@@ -47,6 +53,7 @@
     getUser:async()=>({data:{user:user()},error:null}),getSession:async()=>({data:{session:user()?{user:user()}:null},error:null}),
     onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),
     signInWithPassword:async({email})=>{if(email.startsWith('bloqueado'))return {error:{code:'email_not_confirmed'}};if(email.startsWith('errado'))return {error:{code:'invalid_credentials'}};sessionStorage.setItem('qaRole',email.split('@')[0]);return {data:{user:user()},error:null};},
+    signInWithOAuth:async(options)=>{state.oauth=options;return {data:{provider:options.provider},error:null};},
     signUp:async()=>({data:{session:null},error:null}),signOut:async()=>{sessionStorage.removeItem('qaRole');return {error:null};},resetPasswordForEmail:async()=>({data:{},error:null}),updateUser:async()=>({data:{user:user()},error:null})
   },functions:{invoke:async()=>({data:{concluida:true},error:null})}})};
 })();

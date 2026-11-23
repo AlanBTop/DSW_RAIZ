@@ -2,7 +2,7 @@
   const accessScript = document.currentScript.src;
   const demoRoles = ['cliente', 'vendedor', 'entregador', 'admin'];
   const labels = { cliente: 'Cliente', vendedor: 'Vendedor', entregador: 'Entregador', admin: 'Administrador' };
-  const file = role => role + '/index.html?modo=online';
+  const file = role => role + '/index.html?modo=online' + (role === 'cliente' && window.RaizShopping?.intent() ? '#carrinho' : '');
   const login = role => '../login.html?role=' + role + '&modo=online';
 
   function client() {

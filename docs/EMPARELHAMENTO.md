@@ -31,6 +31,10 @@ A segunda conferência baixa todos os arquivos públicos do manifesto e compara 
 
 ## Funcionalidades reunidas
 
+A primeira página agora é a vitrine pública, com busca, categorias, ordenação e paginação. `produto.html?id=…` mostra descrição, cuidados, preço e estoque sem login. `sobre.html` reúne a apresentação institucional. O visitante pode montar e revisar o carrinho; a autenticação só é solicitada ao continuar a compra. A seleção é retomada na área do cliente para revisão, sem criar pedido automaticamente. Clientes novos informam o endereço antes de transferir a seleção ao carrinho autenticado.
+
+O botão Google foi habilitado na configuração pública após confirmar que o provedor já estava ativo no Supabase. `tests/storefront.py` cobre a navegação e a retomada com fixtures; `tests/storefront_live.py` verifica anonimamente o catálogo real, os detalhes, o carrinho e a autorização que redireciona ao Google, sem entrar em uma conta nem escrever no banco. O carrinho visitante armazena apenas IDs e quantidades em localStorage, e a seleção de compra expira após uma hora em sessionStorage.
+
 Os pagamentos acadêmicos existentes na versão local foram incorporados à interface autenticada, com Pix, boleto, crédito em até três parcelas e débito, histórico, nova tentativa, comprovante e estorno simulado. Não há cobrança bancária. O preparo respeita o pagamento aprovado. Paginação, layout dos perfis, recuperação de senha, permissões e recursos de privacidade do repositório foram preservados.
 
 `raiz_pagamentos` já existe no projeto Supabase informado. `raiz_recursos` não existe na conferência anônima de 23/11/2026. A interface preserva a compatibilidade com essa base, sem habilitar os recursos de extensão ausentes. Nenhuma migração, conta ou dado remoto foi alterado neste emparelhamento. Os testes de negócio usam banco temporário local; fixtures de navegador não comprovam login remoto de uma conta real.
