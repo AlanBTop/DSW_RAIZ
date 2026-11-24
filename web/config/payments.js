@@ -47,8 +47,28 @@
   function prefer(id) {if(!methods().some(m=>m.id===id)) throw new Error('Forma não encontrada.'); const data=read(); data.defaultId=id; write(data);}
   function accepted() {const list=read().accepted; return Array.isArray(list)?list.filter(validType):Object.keys(TYPES);}
   function saveAccepted(list) {if(!Array.isArray(list) || !list.length || list.some(t=>!validType(t))) throw new Error('Selecione pelo menos uma forma aceita.'); const data=read(); data.accepted=[...new Set(list)]; write(data);}
+  function checkoutRules() {
+    return read().checkoutRules || {methods:Object.keys(TYPES),maxInstallments:3,minimumCents:0,pixDiscountBps:0};
+  }
+  function saveCheckoutRules({methods,maxInstallments,minimumCents,pixDiscountBps}) {
+    if(!Array.isArray(methods)||!methods.length||methods.some(type=>!validType(type)))throw new Error('Ative pelo menos um meio de pagamento.');
+    if(!Number.isInteger(maxInstallments)||maxInstallments<1||maxInstallments>12 ||
+       !Number.isSafeInteger(minimumCents)||minimumCents<0 ||
+       !Number.isInteger(pixDiscountBps)||pixDiscountBps<0||pixDiscountBps>10000)throw new Error('Confira as parcelas e o desconto.');
+    const data=read();
+    data.checkoutRules={methods:[...new Set(methods)],maxInstallments,minimumCents,pixDiscountBps};
+    write(data);
+  }
+  function installmentLimit(cents,type) {
+    if(type!=='credit')return 1;
+    const rules=checkoutRules();
+    return Math.max(1,Math.min(rules.maxInstallments,Math.floor(cents/Math.max(1,rules.minimumCents))));
+  }
+  function discountCents(subtotal,type) {
+    return type==='pix'?Math.round(subtotal*checkoutRules().pixDiscountBps/10000):0;
+  }
   function options() {
-    const data=read(); const allowed=accepted();
+    const data=read(); const allowed=accepted().filter(type=>checkoutRules().methods.includes(type));
     const saved=methods().filter(m=>allowed.includes(m.type));
     const list=[...saved.map(m=>({value:m.id,type:m.type,label:label(m),expired:m.expiry && m.expiry<currentMonth()})),
       ...['pix','boleto'].filter(t=>allowed.includes(t) && !saved.some(m=>m.type===t)).map(t=>({value:t,type:t,label:TYPES[t]}))].filter(m=>!m.expired);
@@ -92,5 +112,5 @@
       <div class="raiz-route-actions"><button class="btn btn-primary" onclick="savePixPreference()">Salvar chave Pix de exemplo</button>${current?'<button class="btn btn-outline" onclick="removePixPreference()">Remover chave Pix</button>':''}</div>
     </section>`;
   }
-  window.RaizPayments={TYPES,escape,read,methods,label,saveMethod,remove,prefer,accepted,saveAccepted,options,selection,validatePix,savePix,pix,removePix,profile,saveProfile,pixForm};
+  window.RaizPayments={TYPES,escape,read,methods,label,saveMethod,remove,prefer,accepted,saveAccepted,checkoutRules,saveCheckoutRules,installmentLimit,discountCents,options,selection,validatePix,savePix,pix,removePix,profile,saveProfile,pixForm};
 })();

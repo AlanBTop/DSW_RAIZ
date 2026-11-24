@@ -71,7 +71,15 @@ try:
             ctx.close()
         for role in ('vendedor','admin'):
             ctx=context(820,role);page=ctx.new_page();page.goto(base+'login.html?role='+role+'&modo=online&destino=financeiro')
-            if role=='admin':page.wait_for_url('**/admin/index.html?modo=online#cadastros');expect(page.locator('#cadastros')).to_be_visible()
+            if role=='admin':
+                page.wait_for_url('**/admin/index.html?modo=online#cadastros')
+                expect(page.locator('#cadastros')).to_be_visible()
+                page.locator('.sidebar a[href="#financeiro"]').click()
+                expect(page.locator('#financeiro #feedback')).to_contain_text('Dados atualizados')
+                expect(page.locator('#cadastros')).to_be_hidden()
+                page.locator('.sidebar a[href="#cadastros"]').click()
+                expect(page.locator('#cadastros')).to_be_visible()
+                expect(page.locator('#financeiro')).to_be_hidden()
             else:page.wait_for_url('**/financeiro/index.html?modo=online&role='+role);expect(page.locator('#feedback')).to_contain_text('Dados atualizados')
             ctx.close()
         for extra,payment in [('',False),("sessionStorage.setItem('qaPayError','1');",True),("sessionStorage.setItem('qaOrderError','1');",True)]:

@@ -1,6 +1,6 @@
 # Vendas e pagamentos
 
-Página compartilhada: `/financeiro/index.html?modo=online`. Acesso por “Vendas e pagamentos” nas áreas de vendedor e administrador. Login de vendedor preserva o destino; o login administrativo abre sempre `admin/index.html?modo=online#cadastros`, e o financeiro fica disponível pelo menu. A sessão e o perfil são verificados no Supabase; consultas continuam sujeitas às permissões do servidor.
+O vendedor abre a central pelo menu ?Vendas e pagamentos? em `/financeiro/index.html?modo=online`, e o login preserva esse destino. O login administrativo abre `admin/index.html?modo=online#cadastros`. No menu do painel administrativo, ?Vendas e pagamentos? abre a central na pr?pria ?rea em `#financeiro`. A sess?o e o perfil s?o verificados no Supabase; consultas continuam sujeitas ?s permiss?es do servidor.
 
 ## Navegação e componentes
 

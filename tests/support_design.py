@@ -24,7 +24,7 @@ try:
                 page.goto(base+name+'.html');page.evaluate('document.fonts.ready')
                 expect(page.locator('h1')).to_be_visible();assert page.locator('h1').count()==1
                 if name in ['privacidade','termos']:
-                    expect(page.locator('.support-tabs a[aria-current=page]')).to_have_attribute('href','/'+name+'.html')
+                    expect(page.locator('.support-tabs a[aria-current=page]')).to_have_attribute('href',name+'.html')
                     assert page.locator('.support-tabs a').count()==2
                     assert not page.locator('.support-tabs a[href="/recuperar-senha.html"],.support-tabs a[href="/excluir-conta.html"]').count()
                 else:

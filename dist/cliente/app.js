@@ -504,9 +504,12 @@ function startCheckout() {
 function checkoutPage() {
   const sub = cartSubtotal();
   const delivery = RaizMarket.shipping().cents / 100;
-  const total = sub + delivery;
   const paymentOptions = RaizPayments.options();
   if (!paymentOptions.list.some(m => m.value === state.paymentSelection)) state.paymentSelection = paymentOptions.preferred;
+  const method=paymentOptions.list.find(m=>m.value===state.paymentSelection)?.type;
+  const discount=RaizPayments.discountCents(Math.round(sub*100),method)/100;
+  const total=sub+delivery-discount;
+  const installments=RaizPayments.installmentLimit(Math.round(total*100),method);
 
   return `
     <div class="page-title">
@@ -535,7 +538,7 @@ function checkoutPage() {
           <p class="payment-notice">Pedido de exemplo: nenhum pagamento será cobrado. Não geramos Pix, boleto ou autorização bancária.</p>
           <div class="payment-list">${paymentOptions.list.map(m => `<label class="payment-option"><input type="radio" name="pay" value="${escapeAttr(m.value)}" ${state.paymentSelection===m.value?'checked':''} onchange="selectCheckoutPayment(this.value)">${escapeAttr(m.label)}</label>`).join('') || '<p>Nenhuma forma disponível. Cadastre um cartão de exemplo ou confira as formas aceitas na loja.</p>'}</div>
           <button class="btn btn-outline" onclick="openPaymentEditor()">Cadastrar forma de pagamento de exemplo</button>
-          ${paymentOptions.list.find(m=>m.value===state.paymentSelection)?.type==='credit'?`<label class="field" for="checkoutInstallments">Parcelamento demonstrativo</label><select id="checkoutInstallments" class="input"><option value="1">À vista · ${money(total)}</option><option value="2">2 parcelas (simulação)</option><option value="3">3 parcelas (simulação)</option></select>`:'<p class="small muted">Esta forma é à vista na demonstração.</p>'}
+          ${method==='credit'?`<label class="field" for="checkoutInstallments">Parcelamento demonstrativo</label><select id="checkoutInstallments" class="input">${Array.from({length:installments},(_,i)=>`<option value="${i+1}">${i===0?'À vista · '+money(total):i+1+' parcelas sem juros'}</option>`).join('')}</select>`:'<p class="small muted">Pagamento à vista.</p>'}
         </div>
       </div>
 
@@ -559,12 +562,13 @@ function checkoutPage() {
           <span>Entrega estimada</span>
           <strong>${money(delivery)}</strong>
         </div>
+        ${discount?`<div class="row space"><span>Desconto Pix</span><strong>−${money(discount)}</strong></div>`:''}
         <div class="divider"></div>
         <div class="row space">
           <strong>Total</strong>
           <strong class="money" style="font-size:1.25rem">${money(total)}</strong>
         </div>
-        <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="confirmOrder()">
+        <button class="btn btn-primary btn-block" style="margin-top:16px" onclick="confirmOrder()" ${method?'':'disabled'}>
           Confirmar pedido
         </button>
       </div>
@@ -682,7 +686,7 @@ function localPaymentPage() {
       ${pending?`<div class="raiz-route-actions"><button class="btn btn-primary" onclick="localPaymentAction('approve')">${tx.method.type==='pix'?'Simular recebimento Pix':tx.method.type==='boleto'?'Simular compensação do boleto':'Simular aprovação do cartão'}</button>
         ${['credit','debit'].includes(tx.method.type)?'<button class="btn btn-outline" onclick="localPaymentAction(\'reject\')">Simular recusa do cartão</button>':''}</div>`:''}
       ${tx.state==='rejected'?`<h3>Nova tentativa</h3><label for="retryPaymentMethod">Forma da nova tentativa</label><select id="retryPaymentMethod" class="input" onchange="changeRetryMethod(this.value)">${options.list.map(o=>`<option value="${esc(o.value)}" ${retry?.value===o.value?'selected':''}>${esc(o.label)}</option>`).join('')}</select>
-        ${retry?.type==='credit'?'<label for="retryInstallments">Parcelas</label><select id="retryInstallments" class="input"><option value="1">1 parcela</option><option value="2">2 parcelas</option><option value="3">3 parcelas</option></select>':''}
+        ${retry?.type==='credit'?`<label for="retryInstallments">Parcelas</label><select id="retryInstallments" class="input">${Array.from({length:RaizPayments.installmentLimit(tx.amountCents,'credit')},(_,i)=>`<option value="${i+1}">${i+1}× sem juros</option>`).join('')}</select>`:''}
         <button class="btn btn-primary" onclick="localPaymentAction('retry')" ${retry?'':'disabled'}>Criar nova tentativa</button>`:''}
       ${['pending','rejected'].includes(tx.state)?'<button class="btn btn-outline" style="margin-top:14px" onclick="localPaymentAction(\'cancel\')">Cancelar pedido e liberar estoque</button>':''}
       ${tx.state==='paid' && order.status==='Pendente' && order.step===0?'<button class="btn btn-outline" style="margin-top:14px" onclick="localPaymentAction(\'refund\')">Simular estorno integral antes do preparo</button>':''}

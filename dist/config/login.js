@@ -81,6 +81,9 @@
       const toggleText = document.getElementById('toggleText');
       const toggleLink = document.getElementById('toggleLink');
       const passReqLabel = document.getElementById('passReqLabel');
+      passReqLabel.hidden = !isRegisterMode;
+      document.getElementById('loginRecovery').hidden = isRegisterMode;
+      senhaInput.autocomplete = isRegisterMode ? 'new-password' : 'current-password';
 
       clearAllErrors();
 
@@ -88,7 +91,6 @@
         regFields.style.display = 'block';
         confirmGroup.style.display = 'block';
         strengthBox.style.display = 'block';
-        passReqLabel.textContent = 'Senha Forte Obrigatória';
         submitBtn.textContent = 'Criar Minha Conta no RAIZ';
         toggleText.textContent = 'Já possui uma conta cadastrada?';
         toggleLink.textContent = 'Fazer Login';
@@ -97,7 +99,6 @@
         regFields.style.display = 'none';
         confirmGroup.style.display = 'none';
         strengthBox.style.display = 'none';
-        passReqLabel.textContent = 'Mínimo 8 caracteres';
         submitBtn.textContent = 'Entrar na Plataforma';
         toggleText.textContent = 'Ainda não tem uma conta?';
         toggleLink.textContent = 'Cadastre-se';
@@ -131,22 +132,11 @@
       });
 
       // 2. Máscara de Telefone Brasileira
-      telInput.addEventListener('input', (e) => {
-        let v = e.target.value.replace(/\D/g, '');
-        if (v.length > 11) v = v.substring(0, 11);
-
-        if (v.length > 10) {
-          v = v.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
-        } else if (v.length > 6) {
-          v = v.replace(/^(\d{2})(\d{4})(\d{0,4})$/, '($1) $2-$3');
-        } else if (v.length > 2) {
-          v = v.replace(/^(\d{2})(\d{0,5})$/, '($1) $2');
-        } else if (v.length > 0) {
-          v = v.replace(/^(\d{0,2})$/, '($1');
-        }
-        e.target.value = v;
+      telInput.addEventListener('input', () => {
+        telInput.value = RaizPhone.format(telInput.value);
         validatePhoneField();
       });
+      telInput.addEventListener('blur', () => validatePhoneField(true));
 
       // 3. Força da Senha
       senhaInput.addEventListener('input', () => {
@@ -191,10 +181,10 @@
 
     function validatePhoneField(isBlur = false) {
       if (!isRegisterMode) return true;
-      const raw = telInput.value.replace(/\D/g, '');
+      const raw = RaizPhone.digits(telInput.value);
       const errEl = document.getElementById('telError');
 
-      if (!raw) {
+      if (!telInput.value.trim()) {
         if (isBlur) {
           showError(telInput, errEl, 'O telefone para contato é obrigatório.');
           return false;
@@ -203,11 +193,8 @@
         return false;
       }
 
-      const ddd = parseInt(raw.substring(0, 2), 10);
-      const validDdd = ddd >= 11 && ddd <= 99;
-
-      if (!validDdd || raw.length < 10) {
-        showError(telInput, errEl, 'Informe um telefone completo com DDD válido (ex: (65) 99654-3210).');
+      if (!RaizPhone.valid(raw)) {
+        showError(telInput, errEl, 'Informe um celular ou telefone fixo brasileiro com DDD. Exemplo: (65) 99654-3210.');
         return false;
       }
 
@@ -325,7 +312,7 @@
       const email = emailInput.value.trim().toLowerCase();
       const senha = senhaInput.value;
       const nome = nomeInput.value.trim();
-      const telefone = telInput.value.trim();
+      const telefone = RaizPhone.digits(telInput.value);
 
       if (!validateEmailField(true)) {
         emailInput.focus();

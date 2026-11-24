@@ -16,14 +16,27 @@
   function errorText(error){if(error?.code==='P0001')return error.message;if(['PGRST202','42883'].includes(error?.code))return 'O cadastro de parceiros está em preparação. Tente novamente mais tarde.';return RaizAccess.authError(error);}
   function review(parent,data,role){const list=el('dl',null,'partner-review');for(const[label,value]of [['Perfil',roles[role]],['Nome',data.nome],['Telefone',data.telefone],...(role==='vendedor'?[['Loja',data.loja],['Endereço de coleta',data.endereco],['Funcionamento',data.horario||'Não informado']]:[['Veículo',data.veiculo]])]){const row=el('div');row.append(el('dt',label),el('dd',value));list.append(row);}parent.append(list);}
   function input(parent,key,label,type='text',options={}){const wrap=el('label',label),n=el(options.area?'textarea':'input');if(!options.area)n.type=type;n.name=key;n.id='partner-'+key;n.value=draft[key]||'';n.required=options.required!==false;if(options.max)n.maxLength=options.max;if(options.min)n.minLength=options.min;if(options.auto)n.autocomplete=options.auto;if(options.hint)n.placeholder=options.hint;n.oninput=()=>{draft[key]=n.value;};wrap.append(n);if(options.full)wrap.className='full';parent.append(wrap);return n;}
-  function payload(){return {nome:draft.nome.trim(),telefone:draft.telefone.replace(/\D/g,''),...(profile==='vendedor'?{loja:draft.loja.trim(),endereco:draft.endereco.trim(),horario:draft.horario.trim()}:{veiculo:draft.veiculo})};}
-  function validate(form){if(!form.reportValidity())return false;const phone=draft.telefone.replace(/\D/g,'');if(!/^\d{10,11}$/.test(phone)){say('Informe um telefone com DDD e 10 ou 11 números.');form.querySelector('[name=telefone]')?.focus();return false;}return true;}
+  function payload(){return {nome:draft.nome.trim(),telefone:RaizPhone.digits(draft.telefone),...(profile==='vendedor'?{loja:draft.loja.trim(),endereco:draft.endereco.trim(),horario:draft.horario.trim()}:{veiculo:draft.veiculo})};}
+  function validate(form){
+    if(!form.reportValidity())return false;
+    const phone=form.querySelector('[name=telefone]');
+    if(!phone)return true;
+    draft.telefone=phone.value;
+    if(RaizPhone.valid(RaizPhone.digits(draft.telefone)))return true;
+    say('Informe um celular ou telefone fixo brasileiro com DDD. Exemplo: (65) 99654-3210.');
+    phone.focus();
+    return false;
+  }
   function wizard(){
     say('');content.replaceChildren();const steps=el('ol',null,'partner-steps');for(const[i,label]of ['Seus dados','Dados do perfil','Revisão e envio'].entries()){const n=el('li',label,i<step?'is-complete':'');if(i===step)n.setAttribute('aria-current','step');steps.append(n);}content.append(steps);
     const form=el('form',null,'partner-form');form.setAttribute('aria-label','Cadastro de parceiro');form.append(el('h2',['Vamos nos conhecer','Conte mais sobre seu trabalho','Revise antes de enviar'][step]));content.append(form);
     if(step===0){
       const choice=el('fieldset');choice.append(el('legend','Como você quer participar?'));for(const[value,label,description]of [['vendedor','Quero vender','Cadastre sua loja e seus produtos.'],['entregador','Quero fazer entregas','Faça coletas e entregas na RAIZ.']]){const wrap=el('label',null,'partner-choice'),radio=el('input');radio.type='radio';radio.name='perfil';radio.value=value;radio.checked=profile===value;radio.onchange=()=>{profile=value;window.history.replaceState(null,'','?perfil='+profile);};const copy=el('span',label);copy.append(el('small',description));wrap.append(radio,copy);choice.append(wrap);}form.append(choice);
-      const fields=el('div',null,'partner-fields');input(fields,'nome','Nome completo','text',{min:3,max:150,auto:'name'});input(fields,'telefone','Telefone com DDD','tel',{max:20,auto:'tel',hint:'(65) 99999-9999'});form.append(fields);
+      const fields=el('div',null,'partner-fields');input(fields,'nome','Nome completo','text',{min:3,max:150,auto:'name'});
+      const phone=input(fields,'telefone','Telefone com DDD','tel',{max:19,auto:'tel',hint:'(65) 99654-3210'});
+      phone.value=RaizPhone.format(phone.value);
+      phone.oninput=()=>{phone.value=RaizPhone.format(phone.value);draft.telefone=phone.value;};
+      form.append(fields);
     }else if(step===1){
       if(profile==='vendedor'){form.append(el('p','Essas informações identificam sua loja e o local de coleta dos pedidos.'));input(form,'loja','Nome da loja','text',{min:3,max:150,auto:'organization'});input(form,'endereco','Endereço completo de coleta','text',{min:10,max:500,area:true,auto:'street-address',hint:'Rua, número, bairro, cidade e estado'});input(form,'horario','Horário de funcionamento (opcional)','text',{max:100,required:false,hint:'Segunda a sexta, das 8h às 18h'});}
       else{form.append(el('p','Informe o veículo que você usará para realizar as entregas.'));const label=el('label','Veículo de entrega'),select=el('select');select.name='veiculo';for(const name of ['Bicicleta','Motocicleta','Carro','Utilitário']){const o=el('option',name);o.value=name;select.append(o);}select.value=draft.veiculo;select.onchange=()=>{draft.veiculo=select.value;};label.append(select);form.append(label);}

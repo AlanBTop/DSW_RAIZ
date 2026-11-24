@@ -40,7 +40,7 @@
       <section id="pedidos" class="fin-module" aria-labelledby="ordersTitle"><div class="fin-section-title"><div><h2 id="ordersTitle">Pedidos e status</h2><p>Pagamento e andamento da entrega, lado a lado.</p></div><span id="orderCount"></span></div><div id="orderContent"></div></section>
       <section id="meios" class="fin-module" aria-labelledby="methodsTitle" hidden>
         <div class="fin-section-title"><div><h2 id="methodsTitle">Meios de pagamento</h2><p>Confira o que o checkout oferece e simule suas condições.</p></div></div>
-        <div class="fin-card"><h3>Checkout acadêmico</h3><p>Pix, crédito, débito e boleto estão disponíveis no simulador. Alterar a disponibilidade de cada meio exige configuração no serviço de pagamentos.</p><div id="methods" class="fin-methods"></div></div>
+        <div class="fin-card"><h3>Checkout acadêmico</h3><p id="methodsHelp">Pix, crédito, débito e boleto estão disponíveis no simulador.</p><div id="methods" class="fin-methods"></div></div>
         <div class="fin-columns">
           <div class="fin-card"><h3>Conexão com gateway</h3><span class="fin-badge unknown">○ Sem integração</span><p>Não existe um gateway de cobrança conectado. Chaves precisam ser configuradas no servidor, em um cofre de segredos.</p><label>Chave de API<input type="password" disabled placeholder="Não configurada" autocomplete="off"></label><button type="button" disabled>Testar conexão</button><p class="fin-muted">O teste ficará disponível com uma integração de pagamento real.</p></div>
           <div class="fin-card"><h3>Prévia de parcelamento e descontos</h3><p class="fin-muted">Calculadora de planejamento. Não altera o checkout, que hoje oferece até 3 parcelas sem juros.</p>
@@ -56,7 +56,23 @@
           </div>
         </div>
       </section>
-      <section id="repasses" class="fin-module" aria-labelledby="settlementTitle" hidden><div class="fin-section-title"><div><h2 id="settlementTitle">Conciliação e repasses</h2><p>Separe os valores registrados do dinheiro efetivamente recebido.</p></div></div><div id="settlement"></div></section>
+      <section id="repasses" class="fin-module" aria-labelledby="settlementTitle" hidden>
+        <div class="fin-section-title"><div><h2 id="settlementTitle">Conciliação e repasses</h2><p>Separe os valores registrados do dinheiro efetivamente recebido.</p></div></div>
+        <div id="settlement"></div>
+        <div id="settlementPlanner" class="fin-card" hidden>
+          <h3>Simular um recebível</h3>
+          <p>Informe as condições que deseja comparar. A simulação usa dias corridos e fica fora dos relatórios.</p>
+          <form id="settlementCalculator" class="fin-calculator">
+            <label>Valor bruto (R$)<input id="grossAmount" type="number" min="0.01" max="10000000" step="0.01" required></label>
+            <label>Tarifa da transação (%)<input id="transactionRate" type="number" value="0" min="0" max="100" step="0.01" required></label>
+            <label>Taxa de antecipação sobre o saldo (%)<input id="advanceRate" type="number" value="0" min="0" max="100" step="0.01" required></label>
+            <label>Data da aprovação<input id="approvalDate" type="date" required></label>
+            <label>Prazo de disponibilidade (dias)<input id="settlementDays" type="number" value="0" min="0" max="365" step="1" required></label>
+            <button type="submit" class="fin-primary">Simular repasse</button>
+          </form>
+          <output id="settlementPreview" form="settlementCalculator" aria-live="polite" hidden></output>
+        </div>
+      </section>
       <section id="seguranca" class="fin-module" aria-labelledby="securityTitle" hidden><div class="fin-section-title"><div><h2 id="securityTitle">Segurança, antifraude e disputas</h2><p>Visibilidade sobre os dados disponíveis e as integrações necessárias.</p></div></div><div id="security"></div></section>
     </main>
   </div>
