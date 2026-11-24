@@ -43,7 +43,7 @@ try:
                 expect(page.locator('#'+section)).to_be_visible();expect(page.locator('.raiz-content > section:visible')).to_have_count(1)
                 assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1')
             def shot(name):page.screenshot(path=str(out/f'{name}-{width}.png'),full_page=True)
-            page.goto(base+'vendedor/index.html?modo=online#privacidade');loaded();expect(page.locator('#privacidade')).to_be_visible();expect(page.locator('#visao')).to_be_hidden();shot('conta')
+            page.goto(base+'vendedor/index.html?modo=online#privacidade');loaded();expect(page.locator('#privacidade')).to_be_visible();expect(page.locator('#visao')).to_be_hidden();expect(page.locator('.sidebar a[data-section="financeiro"]')).to_have_attribute('href','../financeiro/index.html?modo=online&role=vendedor');shot('conta')
             nav('visao');expect(page.locator('.seller-metric strong')).to_have_text(['1','5','1','6']);shot('visao')
             page.locator('.topbar').get_by_role('button',name='Cadastrar produto',exact=True).click();create=page.locator('.raiz-create');expect(create).to_have_attribute('open','')
             create.get_by_label('Nome',exact=True).fill('Samambaia do teste');create.get_by_label('Preço (R$)',exact=True).fill('29.90');create.get_by_label('Estoque',exact=True).fill('4');create.get_by_label('Descrição',exact=True).fill('Uma nova planta cadastrada pelo vendedor.');create.get_by_role('button',name='Salvar produto',exact=True).click();expect(page.locator('.raiz-feedback')).to_have_text('Alteração salva.')

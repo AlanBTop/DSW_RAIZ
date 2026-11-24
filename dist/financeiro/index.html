@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#1b4332">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Vendas e pagamentos · RAIZ</title>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap">
+  <link rel="stylesheet" href="../config/site-theme.css">
+  <link rel="stylesheet" href="../config/finance.css">
+</head>
+<body>
+  <a class="fin-skip" href="#workspace">Pular para o conteúdo</a>
+  <header class="fin-header"><a class="fin-brand" href="../index.html" aria-label="RAIZ, início"><svg viewBox="0 0 64 64" width="34" height="34" aria-hidden="true"><path d="M31 51C22 37 15 28 5 18c11-2 22 1 28 9 2 4 2 9-2 24Z" fill="#2D6A4F"/><path d="M33 50c1-19 5-31 20-39 3 13 0 24-7 30-4 4-8 6-13 9Z" fill="#52B788"/><path d="M31 27v29" stroke="#1B4332" stroke-width="3.4" stroke-linecap="round"/></svg> RAIZ</a><span>Central financeira</span><a id="back" href="../login.html?modo=online">Minha área</a></header>
+  <div id="gate" class="fin-gate" role="status">Verificando seu acesso…</div>
+  <div id="app" class="fin-layout" hidden>
+    <aside class="fin-side"><p class="fin-eyebrow">GESTÃO DA LOJA</p><nav aria-label="Vendas e pagamentos">
+      <a href="#pedidos" data-module="pedidos"><span aria-hidden="true">▤</span> Pedidos e status</a>
+      <a href="#meios" data-module="meios"><span aria-hidden="true">▣</span> Meios de pagamento</a>
+      <a href="#repasses" data-module="repasses"><span aria-hidden="true">↗</span> Conciliação e repasses</a>
+      <a href="#seguranca" data-module="seguranca"><span aria-hidden="true">◇</span> Segurança e disputas</a>
+    </nav><p class="fin-side-note">As permissões da sua conta definem os pedidos disponíveis.</p></aside>
+    <main id="workspace" tabindex="-1">
+      <div class="fin-title"><div><p id="scope" class="fin-eyebrow">RAIZ</p><h1>Vendas e pagamentos</h1><p>Do pedido aprovado à visão do seu recebimento.</p></div><button id="refresh" type="button">↻ Atualizar dados</button></div>
+      <p class="fin-notice">ⓘ Ambiente acadêmico: os pagamentos são simulados. Não há cobrança nem movimentação de dinheiro.</p>
+      <p id="feedback" role="status" aria-live="polite"></p>
+      <div id="metrics" class="fin-metrics" aria-label="Indicadores de vendas"></div>
+      <p id="coverage" class="fin-muted"></p>
+      <div id="filters" class="fin-card">
+        <form id="filterForm" class="fin-filters">
+          <label>De<input id="from" type="date"></label><label>Até<input id="to" type="date"></label>
+          <label>Status do pagamento<select id="status"><option value="">Todos os status</option><option value="pending">Aguardando pagamento</option><option value="review">Em análise</option><option value="paid">Aprovado / pago</option><option value="cancelled">Cancelado / recusado</option><option value="refunded">Reembolsado / estornado</option><option value="unknown">Sem registro</option></select></label>
+          <label>Forma de pagamento<select id="method"><option value="">Todas as formas</option><option value="pix">Pix</option><option value="credit">Crédito</option><option value="debit">Débito</option><option value="boleto">Boleto</option></select></label>
+          <label>Valor mínimo (R$)<input id="min" type="number" min="0" step="0.01" inputmode="decimal"></label><label>Valor máximo (R$)<input id="max" type="number" min="0" step="0.01" inputmode="decimal"></label>
+          <button class="fin-primary" type="submit">Aplicar filtros</button><button id="clear" type="button">Limpar</button>
+        </form><p class="fin-muted">Período pela criação do pedido. Indicadores acima mostram toda a sua área; tabelas e relatórios seguem estes filtros.</p>
+      </div>
+      <section id="pedidos" class="fin-module" aria-labelledby="ordersTitle"><div class="fin-section-title"><div><h2 id="ordersTitle">Pedidos e status</h2><p>Pagamento e andamento da entrega, lado a lado.</p></div><span id="orderCount"></span></div><div id="orderContent"></div></section>
+      <section id="meios" class="fin-module" aria-labelledby="methodsTitle" hidden>
+        <div class="fin-section-title"><div><h2 id="methodsTitle">Meios de pagamento</h2><p>Confira o que o checkout oferece e simule suas condições.</p></div></div>
+        <div class="fin-card"><h3>Checkout acadêmico</h3><p>Pix, crédito, débito e boleto estão disponíveis no simulador. Alterar a disponibilidade de cada meio exige configuração no serviço de pagamentos.</p><div id="methods" class="fin-methods"></div></div>
+        <div class="fin-columns">
+          <div class="fin-card"><h3>Conexão com gateway</h3><span class="fin-badge unknown">○ Sem integração</span><p>Não existe um gateway de cobrança conectado. Chaves precisam ser configuradas no servidor, em um cofre de segredos.</p><label>Chave de API<input type="password" disabled placeholder="Não configurada" autocomplete="off"></label><button type="button" disabled>Testar conexão</button><p class="fin-muted">O teste ficará disponível com uma integração de pagamento real.</p></div>
+          <div class="fin-card"><h3>Prévia de parcelamento e descontos</h3><p class="fin-muted">Calculadora de planejamento. Não altera o checkout, que hoje oferece até 3 parcelas sem juros.</p>
+            <form id="calculator" class="fin-calculator">
+              <label>Preço de referência (R$)<input id="price" type="number" value="100" min="0.01" max="10000000" step="0.01" required></label>
+              <label>Número máximo de parcelas<select id="installments"><option>1</option><option>2</option><option selected>3</option><option>6</option><option>12</option></select></label>
+              <label>Mínimo por parcela (R$)<input id="minimum" type="number" value="20" min="0.01" step="0.01" required></label>
+              <label>Juros<select id="interestMode"><option value="merchant">Sem juros para o cliente</option><option value="customer">Juros pagos pelo cliente</option></select></label>
+              <label>Taxa mensal para simulação (%)<input id="interest" type="number" value="2" min="0" max="100" step="0.01" required></label>
+              <label>Desconto no Pix (%)<input id="discount" type="number" value="5" min="0" max="100" step="0.01" required></label>
+              <button type="submit" class="fin-primary">Calcular prévia</button>
+            </form><output id="preview" aria-live="polite"></output>
+          </div>
+        </div>
+      </section>
+      <section id="repasses" class="fin-module" aria-labelledby="settlementTitle" hidden><div class="fin-section-title"><div><h2 id="settlementTitle">Conciliação e repasses</h2><p>Separe os valores registrados do dinheiro efetivamente recebido.</p></div></div><div id="settlement"></div></section>
+      <section id="seguranca" class="fin-module" aria-labelledby="securityTitle" hidden><div class="fin-section-title"><div><h2 id="securityTitle">Segurança, antifraude e disputas</h2><p>Visibilidade sobre os dados disponíveis e as integrações necessárias.</p></div></div><div id="security"></div></section>
+    </main>
+  </div>
+  <dialog id="detail" aria-labelledby="detailTitle"><div id="detailBody"></div><form method="dialog"><button>Fechar detalhes</button></form></dialog>
+  <dialog id="confirm" aria-labelledby="confirmTitle"><h2 id="confirmTitle">Iniciar preparo?</h2><p>O pedido será marcado como em preparo. Confirme que o pagamento está aprovado antes de separar os produtos.</p><form method="dialog" class="fin-actions"><button value="cancel">Voltar</button><button value="confirm" class="fin-primary">Confirmar preparo</button></form></dialog>
+  <article id="printReport"></article>
+  <script src="../config/environment.js"></script><script src="../config/supabase-client.js"></script><script src="../config/web-access.js"></script><script src="../config/api-web.js"></script><script src="../config/finance-export.js"></script><script src="../config/finance.js"></script>
+</body>
+</html>

@@ -602,11 +602,17 @@
         await privacy();
         if(role==='entregador')RaizCourier.privacy(document.getElementById('privacidade'),{user,profile:courierProfile,logout:courierLogout});
         if(role==='vendedor')RaizSeller.privacy(document.getElementById('privacidade'),{user,store:sellerStore,logout:sellerLogout});
+        if(['vendedor','admin'].includes(role)) {
+          const finance = el('a','Vendas e pagamentos','nav-btn');
+          finance.href = '../financeiro/index.html?modo=online&role=' + role;
+          finance.dataset.section = 'financeiro';
+          sectionNav.append(finance);
+        }
         const order = {
           cliente:['catalogo','favoritos','carrinho','pedidos','conta','privacidade'],
-          vendedor:['visao','pedidos','produtos','loja','estatisticas','privacidade'],
+          vendedor:['visao','pedidos','financeiro','produtos','loja','estatisticas','privacidade'],
           entregador:['disponibilidade','andamento','ofertas','historico','carteira','privacidade'],
-          admin:['visao','cadastros','usuarios','moderacao','pedidos','entregas','solicitacoes','eventos','privacidade']
+          admin:['visao','cadastros','financeiro','usuarios','moderacao','pedidos','entregas','solicitacoes','eventos','privacidade']
         }[role] || [];
         const rank = id => { const index=order.indexOf(id); return index < 0 ? order.length : index; };
         [...sectionNav.children]

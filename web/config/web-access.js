@@ -2,7 +2,7 @@
   const accessScript = document.currentScript.src;
   const demoRoles = ['cliente', 'vendedor', 'entregador', 'admin'];
   const labels = { cliente: 'Cliente', vendedor: 'Vendedor', entregador: 'Entregador', admin: 'Administrador' };
-  const destinations = {cliente:new Set(['catalogo','favoritos','carrinho','pedidos','conta','privacidade']),vendedor:new Set(['visao','produtos','pedidos','loja','estatisticas','privacidade'])};
+  const destinations = {cliente:new Set(['catalogo','favoritos','carrinho','pedidos','conta','privacidade']),vendedor:new Set(['visao','produtos','pedidos','loja','estatisticas','financeiro','privacidade']),admin:new Set(['financeiro'])};
   const allowedDestination = (role,section) => destinations[role]?.has(section) === true;
   const destinationKey = 'raiz_auth_destination_v1';
   function rememberDestination(role) {
@@ -22,6 +22,7 @@
   }
   const file = role => {
     const section = role === 'cliente' && window.RaizShopping?.intent() ? 'carrinho' : destination(role);
+    if (section === 'financeiro') return 'financeiro/index.html?modo=online&role=' + role;
     return role + '/index.html?modo=online' + (section ? '#' + section : '');
   };
   const login = role => {
@@ -209,5 +210,5 @@
     document.body.classList.remove('raiz-pending');
   }
 
-  window.RaizAccess = { demoRoles, labels, client, callback, authError, message, restoreLogin, rememberDestination, open };
+  window.RaizAccess = { demoRoles, labels, client, session, callback, authError, message, restoreLogin, rememberDestination, open };
 })();

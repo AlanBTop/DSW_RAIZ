@@ -30,7 +30,7 @@
     create.onclick=()=>{location.hash='produtos';const details=document.querySelector('.raiz-create');if(details){details.open=true;details.scrollIntoView({block:'start'});details.querySelector('input')?.focus();}};
     navigation.append(create);
   }
-  function decorateNav(nav){const symbols={visao:'home',pedidos:'box',produtos:'leaf',loja:'shop',estatisticas:'chart',privacidade:'shield'};for(const a of nav.querySelectorAll('a')){const text=a.dataset.section==='privacidade'?'Conta e privacidade':a.textContent;a.replaceChildren(icon(symbols[a.dataset.section]),el('span',text));}}
+  function decorateNav(nav){const symbols={visao:'home',pedidos:'box',produtos:'leaf',loja:'shop',estatisticas:'chart',financeiro:'chart',privacidade:'shield'};for(const a of nav.querySelectorAll('a')){const text=a.dataset.section==='privacidade'?'Conta e privacidade':a.textContent;a.replaceChildren(icon(symbols[a.dataset.section]),el('span',text));}}
   async function summary(db){
     if(window.RaizDB.isLocal){
       const [p,o]=await Promise.all([RaizApi.all(db,'vendedor_produtos','id,ativo,estoque'),RaizApi.all(db,'vendedor_pedidos','id,status')]);

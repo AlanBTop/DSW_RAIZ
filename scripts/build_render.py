@@ -28,7 +28,7 @@ finally:
 
 required = ['index.html', 'produto.html', 'loja.html', 'carrinho.html', 'sobre.html', 'login.html', 'cadastro-parceiro.html', 'recuperar-senha.html', '404.html',
             'cliente/index.html', 'vendedor/index.html', 'entregador/index.html',
-            'admin/index.html', 'config/environment.js', '_headers']
+            'admin/index.html', 'financeiro/index.html', 'config/environment.js', '_headers']
 for name in required:
     if not (ROOT / 'dist' / name).is_file():
         raise SystemExit('Arquivo obrigatório ausente: ' + name)
