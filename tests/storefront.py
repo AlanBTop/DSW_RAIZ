@@ -73,7 +73,7 @@ try:
                 # Compra direta também exige login e guarda quantidade; ID inválido tem retorno útil.
                 page.evaluate("sessionStorage.removeItem('qaRole')");page.goto(base+'produto.html?id=1')
                 page.get_by_label('Quantidade',exact=True).fill('3');page.get_by_role('button',name='Comprar agora').click()
-                expect(page).to_have_url(base+'login.html?role=cliente&modo=online');expect(page.locator('#btnGoogle')).to_be_visible();assert page.evaluate('RaizShopping.intent().items')==[{'id':1,'quantity':3}]
+                expect(page).to_have_url(base+'login.html?role=cliente&modo=online');expect(page.locator('#btnGoogle')).to_be_visible();page.wait_for_function('() => Boolean(window.RaizShopping)');assert page.evaluate('RaizShopping.intent().items')==[{'id':1,'quantity':3}]
                 page.goto(base+'produto.html?id=9999');expect(page.get_by_role('heading',name='Produto não encontrado')).to_be_visible()
                 page.goto(base+'produto.html?id=abc');expect(page.get_by_role('link',name='Explorar produtos')).to_be_visible()
                 assert not errors,errors

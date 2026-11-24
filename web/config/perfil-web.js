@@ -65,7 +65,7 @@
   async function render(db, active, switchAccount) {
     const { role, user } = active;
     const features = await RaizApi.initialize(db);
-    const main = el('div', null, 'app-shell raiz-dashboard raiz-' + role);
+    const main = el('div', null, 'app-shell raiz-dashboard raiz-' + role + (role === 'cliente' ? ' raiz-customer' : ''));
     const sidebar = el('aside', null, 'sidebar');
     sidebar.setAttribute('aria-label', 'Menu do perfil ' + RaizAccess.labels[role]);
     const logo = el('a', null, 'logo');
@@ -98,7 +98,7 @@
     sidebarFoot.append(hub, about);
     sidebar.append(logo, caption, userCard, sectionNav, sidebarFoot);
     const workspace = el('main', null, 'main');
-    const header = el('header', null, 'topbar');
+    const header = el('header', null, role === 'cliente' ? 'customer-toolbar' : 'topbar');
     const headerCopy = el('div');
     const title = el('h2', RaizAccess.labels[role]);
     const subtitles = {cliente:'RAIZ · Marketplace de Plantas',vendedor:'RAIZ · Área do vendedor',entregador:'RAIZ · Logística Botânica',admin:'RAIZ · Governança'};
@@ -112,7 +112,7 @@
     const pageContent = el('div', null, 'app-content raiz-app-content');
     const content = el('div', null, 'raiz-content');
     const partnerCopy = {
-      cliente: ['Marketplace de plantas', 'Plantas que transformam seu dia.', 'Encontre espécies, vasos, insumos e ferramentas em lojas especializadas.'],
+      cliente: ['Marketplace RAIZ', 'Encontre seu próximo verde.', 'Plantas, vasos e tudo para cultivar, de quem entende de cuidado.'],
       vendedor: ['Seu negócio, mais verde', 'Vamos cultivar boas vendas?', 'Cuide da sua vitrine, acompanhe os pedidos e veja sua loja crescer.'],
       entregador: ['Conectando jardins e pessoas', 'Cada entrega, um novo começo.', 'Organize suas rotas, acompanhe as oportunidades e leve mais verde para cada lar.'],
       admin: ['Um ecossistema em crescimento', 'Cuidar de cada detalhe.', 'Acompanhe a operação, os parceiros e o catálogo em um só lugar.']
@@ -122,7 +122,7 @@
       const [eyebrow, headline, description] = partnerCopy[role];
       const hero = el('section', null, 'partner-hero');
       const copy = el('div', null, 'partner-hero-copy');
-      const heading = el('h2', headline);
+      const heading = el(role === 'cliente' ? 'h1' : 'h2', headline);
       heading.id = 'partner-welcome';
       hero.setAttribute('aria-labelledby', heading.id);
       copy.append(el('span', eyebrow, 'eyebrow'), heading, el('p', description));
@@ -138,12 +138,23 @@
     navigation.lastChild.textContent = 'Sair';
     header.append(headerCopy, navigation);
     pageContent.append(feedback, content);
-    workspace.append(header, pageContent);
+    if (role === 'cliente') {
+      sectionNav.classList.add('customer-nav');
+      workspace.append(header, sectionNav, pageContent);
+    } else workspace.append(header, pageContent);
     const mobileNav = el('nav', null, 'bottom-nav');
     mobileNav.setAttribute('aria-label', 'Navegação rápida do perfil');
-    main.append(sidebar, workspace, mobileNav);
+    if (role === 'cliente') main.append(workspace);
+    else main.append(sidebar, workspace, mobileNav);
     document.body.replaceChildren(main);
     document.body.classList.remove('raiz-pending');
+    RaizShell.mount({ role,
+      ...(role === 'cliente' ? {
+        search: value => { catalogState.search = value; catalogState.favorites = false; pages.catalog = 0; location.hash = 'catalogo'; load(); },
+        category: value => { catalogState.category = value; catalogState.favorites = false; pages.catalog = 0; location.hash = 'catalogo'; load(); }
+      } : {})
+    });
+    if (role === 'cliente') navigation.firstChild.remove();
 
     async function call(promise) {
       const { data, error } = await promise;
@@ -188,6 +199,9 @@
       const anchor = el('a', navLabel, 'nav-btn');
       anchor.href = '#' + id;
       anchor.dataset.section = id;
+      if (role === 'cliente' && id === 'catalogo') anchor.onclick = () => {
+        if (catalogState.favorites) { catalogState.favorites = false; pages.catalog = 0; load(); }
+      };
       sectionNav.append(anchor);
       content.append(element);
       return element;
@@ -272,7 +286,8 @@
       box.append(history);return box;
     }
 
-    const catalogState = { search: '', category: '', favorites: false };
+    const initialParams = new URLSearchParams(location.search);
+    const catalogState = { search: initialParams.get('busca') || '', category: initialParams.get('categoria') || '', favorites: false };
     let catalogOffline=false;
     async function paymentsForRole() {
       try { return await rpc('pagamentos') || []; }
@@ -302,9 +317,11 @@
         }
       }
       setIdentity(profile[0]?.nome);
+      RaizShell.updateCart(cart.reduce((sum, item) => sum + item.quantidade, 0));
+      if (role === 'cliente') title.textContent = profile[0]?.nome ? 'Olá, ' + profile[0].nome + '.' : 'Minha conta';
       items.push(...await RaizApi.related(db,'cliente_itens_pedido','id,pedido_id,produto_nome,quantidade,preco_unitario','pedido_id',orders.map(o=>o.id)));
       const cartProducts=await RaizApi.related(db,'cliente_produtos','id,nome,preco,estoque,loja_id','id',cart.map(i=>i.produto_id));
-      const catalog = section('Catálogo', 'catalogo', 'Buscar');
+      const catalog = section('Catálogo', 'catalogo', 'Catálogo');
       if(shoppingNotice) catalog.append(el('p',shoppingNotice,'raiz-notice'));
       const favoritesShortcut = el('a', 'Favoritos', 'nav-btn');
       favoritesShortcut.href = '#catalogo';
@@ -351,6 +368,8 @@
           art.dataset.category = p.categoria;
           art.setAttribute('aria-hidden','true');
           row.prepend(art);
+          const categoryLabel = el('p', p.categoria, 'raiz-product-category');
+          art.after(categoryLabel);
           if (profile.length && !catalogOffline) {
             const favorite = action(favoriteIds.has(p.id) ? 'Remover favorito' : 'Favoritar', () => setItem(p.id,0,!favoriteIds.has(p.id)));
             favorite.classList.add('raiz-secondary');
@@ -625,6 +644,7 @@
           const link = el('a', item.textContent, 'nav-btn');
           link.href = item.href;
           link.dataset.section = item.dataset.section;
+          link.onclick = item.onclick;
           return link;
         }));
         syncNavigation();
@@ -697,7 +717,7 @@
         if (selected) link.setAttribute('aria-current', 'page');
         else link.removeAttribute('aria-current');
       }
-      title.textContent = document.getElementById(current)?.querySelector('h2')?.textContent || RaizAccess.labels[role];
+      if (role !== 'cliente') title.textContent = document.getElementById(current)?.querySelector('h2')?.textContent || RaizAccess.labels[role];
     }
     window.addEventListener('hashchange', syncNavigation);
     window.addEventListener('unhandledrejection',()=>{void RaizApi.event(db,'erro',role);});

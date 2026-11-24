@@ -175,6 +175,7 @@
     if (allowedRole) panel.append(link('Abrir minha área', '../' + file(allowedRole)));
     if (RaizDB.isConfigured()) panel.append(switchAccount(login(role), value => feedback.textContent = value));
     document.body.replaceChildren(panel);
+    window.RaizShell?.mount();
     document.body.classList.remove('raiz-pending');
   }
 

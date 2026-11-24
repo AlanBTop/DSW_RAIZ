@@ -17,10 +17,7 @@
   function categoryUrl(category){return url('index.html',{categoria:category});}
   function art(product,large=false){const e=node('div',product.emoji||icons[product.categoria]||'🌿','store-art'+(large?' store-art-large':''));e.dataset.category=product.categoria;e.setAttribute('aria-hidden','true');return e;}
   function count(){const total=RaizShopping.cart().reduce((sum,r)=>sum+r.quantity,0);document.getElementById('storeCartCount').textContent=String(total);}
-  document.getElementById('storeHeader').innerHTML=`<div class="market-wrap store-header-row"><a class="store-brand" href="index.html" aria-label="RAIZ, início"><span aria-hidden="true">🌿</span>RAIZ</a><form class="store-search" id="storeSearch" role="search"><label class="raiz-sr" for="storeQuery">Buscar produtos</label><input id="storeQuery" type="search" maxlength="120" placeholder="Busque plantas, vasos e tudo para cultivar"><button type="submit">Buscar</button></form><nav class="store-account" aria-label="Sua conta"><a id="storeAccount" href="login.html?role=cliente&amp;modo=online">Entrar / Cadastrar</a><a class="store-cart-link" href="carrinho.html">Carrinho <span id="storeCartCount">0</span></a></nav></div><nav class="market-wrap store-categories" aria-label="Categorias"><a href="index.html">Todos os produtos</a><a href="index.html?categoria=plantas">Plantas</a><a href="index.html?categoria=vasos">Vasos</a><a href="index.html?categoria=insumos">Insumos</a><a href="index.html?categoria=ferramentas">Ferramentas</a><a class="store-about-link" href="sobre.html">Sobre a RAIZ</a></nav>`;
-  document.getElementById('storeQuery').value=params.get('busca')||'';
-  document.getElementById('storeSearch').onsubmit=event=>{event.preventDefault();location.href=url('index.html',{busca:document.getElementById('storeQuery').value.trim()});};
-  document.getElementById('storeFooter').innerHTML=`<div class="market-wrap store-footer-row"><div><strong>RAIZ</strong><p>Plantas, pessoas e cuidado.</p></div><nav aria-label="Informações e parceiros"><a href="sobre.html">Sobre a RAIZ</a><a href="login.html?role=vendedor&amp;modo=online">Área do vendedor</a><a href="login.html?role=entregador&amp;modo=online">Área do entregador</a><a href="privacidade.html">Privacidade</a><a href="termos.html">Termos</a><a href="mailto:suporteraiz.mkt@hotmail.com">Suporte</a></nav><p>Projeto acadêmico. Pagamentos simulados, sem cobrança bancária.</p></div>`;
+  RaizShell.mount();
   count();window.addEventListener('raiz-cart-updated',count);window.addEventListener('storage',count);
   async function query(builder){const {data,error}=await builder;if(error)throw error;return data||[];}
   function add(product,quantity){
@@ -153,7 +150,6 @@
     try {
       await RaizDB.ready;db=RaizDB.getClient({publicCatalog:true});if(!db)throw new Error('Catálogo indisponível');
       if(pageType==='catalog')await catalog();else if(pageType==='product')await product();else await cart();
-      try {const {data}=await db.auth.getUser();if(data?.user){const account=document.getElementById('storeAccount');account.textContent='Minha conta';account.href='cliente/index.html?modo=online';}}catch(_){}
     }catch(error){fail(error);}
   }
   if(pageType==='catalog')for(const [id,param]of [['storeCategory','categoria'],['storeOrder','ordem']])document.getElementById(id).onchange=event=>{params.set(param,event.target.value);params.delete('pagina');history.replaceState(null,'','?'+params);catalog().catch(fail);};

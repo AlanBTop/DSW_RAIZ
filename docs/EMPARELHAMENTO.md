@@ -1,5 +1,11 @@
 # Versão compartilhada entre local, GitHub e Render
 
+## Identidade visual compartilhada
+
+Todas as páginas usam `config/site-shell.js` para o mesmo cabeçalho (marca, busca, categorias e conta) e rodapé. `config/site-theme.css`, carregado por último, mantém cores, fontes, botões, largura e cartões consistentes entre os estilos de cada área. Alterações nesses componentes devem ser feitas nesses arquivos compartilhados.
+
+A conta do cliente continua a vitrine, com navegação horizontal para catálogo, favoritos, carrinho, pedidos, perfil e privacidade. Os demais perfis mantêm seus menus operacionais dentro da mesma identidade. `tests/design_consistency.py` compara medidas reais do cabeçalho em 14 páginas e quatro larguras, verifica ausência de transbordamento e exercita busca, categorias, favoritos e carrinho com API isolada. Os testes não utilizam contas ou pedidos reais.
+
 A fonte de publicação é `web/`. O build `python scripts/build_render.py` copia essa fonte para `dist/`, gera apenas a configuração pública de produção e registra os hashes em `dist/release.json`. O Render acompanha `main` de AlanBTop/DSW_RAIZ, executa esse build e publica `dist/`.
 
 A cópia `../RAIZOTIMIZADO/web/` usa os mesmos HTML, CSS, JavaScript, imagens e SDK. O arquivo `config/environment.js` mantém os exemplos habilitados apenas em loopback; `config/local-client.js` e o servidor Python são exclusivos da execução autenticada local. No Render, os quatro perfis exigem login e parâmetros de demonstração não liberam acesso.
