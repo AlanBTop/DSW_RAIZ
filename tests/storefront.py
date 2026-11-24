@@ -45,7 +45,7 @@ try:
                 page.locator('#storeQuery').fill('Cacto fora dos cem');page.get_by_role('button',name='Buscar',exact=True).click()
                 expect(page.locator('.store-product')).to_have_count(1);page.get_by_role('link',name='Ver produto',exact=True).click()
                 expect(page.get_by_role('heading',name='Cacto fora dos cem',exact=True)).to_be_visible()
-                expect(page.get_by_text('Descrição de teste',exact=True)).to_be_visible()
+                expect(page.locator('.store-description').get_by_text('Descrição de teste',exact=True)).to_be_visible()
                 assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1')
                 if channel=='msedge' and width==390:page.screenshot(path=str(out/'produto-390.png'),full_page=True)
                 page.get_by_role('button',name='Adicionar ao carrinho').click();expect(page.locator('#storeCartCount')).to_have_text('1')

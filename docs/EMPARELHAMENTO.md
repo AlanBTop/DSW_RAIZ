@@ -4,7 +4,11 @@
 
 Todas as páginas usam `config/site-shell.js` para o mesmo cabeçalho (marca, busca, categorias e conta) e rodapé. `config/site-theme.css`, carregado por último, mantém cores, fontes, botões, largura e cartões consistentes entre os estilos de cada área. Alterações nesses componentes devem ser feitas nesses arquivos compartilhados.
 
-A conta do cliente continua a vitrine, com navegação horizontal para catálogo, favoritos, carrinho, pedidos, perfil e privacidade. Os demais perfis mantêm seus menus operacionais dentro da mesma identidade. `tests/design_consistency.py` compara medidas reais do cabeçalho em 14 páginas e quatro larguras, verifica ausência de transbordamento e exercita busca, categorias, favoritos e carrinho com API isolada. Os testes não utilizam contas ou pedidos reais.
+A área do cliente segue uma experiência de marketplace, com telas independentes para compras, favoritos, carrinho, pedidos, perfil e privacidade. A navegação usa fragmentos de URL e suporta voltar, avançar e recarregar. `cliente/commerce.js` e `cliente/commerce.css` compõem essa interface com a identidade botânica RAIZ. A vitrine apresenta categorias, cartões com favoritos, filtros e ordenação por preço em todo o catálogo. Os novos SVGs são ilustrações de categoria, identificadas como ilustrativas; não são fotos dos anúncios. A página pública inicial mantém seu layout.
+
+`config/buyer-pages.css` organiza os detalhes do produto e o carrinho visitante; o carrinho autenticado apresenta o resumo de compra ao lado dos itens no desktop. O checkout existente encaminha para os pedidos após o registro. As ações de cancelamento do cliente ficam em um controle expansível dentro do pedido. Os demais perfis mantêm seus menus operacionais.
+
+`tests/design_consistency.py` compara medidas reais do cabeçalho em 14 páginas e quatro larguras. `tests/customer_marketplace.py` exercita ordenação, categorias, favoritos, carrinho e navegação entre telas, com capturas de catálogo, produto, carrinho, pedidos e conta em 1440, 390 e 320 pixels. Os testes usam API isolada e não utilizam contas ou pedidos reais.
 
 A fonte de publicação é `web/`. O build `python scripts/build_render.py` copia essa fonte para `dist/`, gera apenas a configuração pública de produção e registra os hashes em `dist/release.json`. O Render acompanha `main` de AlanBTop/DSW_RAIZ, executa esse build e publica `dist/`.
 

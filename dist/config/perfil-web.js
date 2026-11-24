@@ -118,6 +118,7 @@
       admin: ['Um ecossistema em crescimento', 'Cuidar de cada detalhe.', 'Acompanhe a operação, os parceiros e o catálogo em um só lugar.']
     };
     function welcome() {
+      if (role === 'cliente') return;
       if (!partnerCopy[role]) return;
       const [eyebrow, headline, description] = partnerCopy[role];
       const hero = el('section', null, 'partner-hero');
@@ -151,7 +152,7 @@
     RaizShell.mount({ role,
       ...(role === 'cliente' ? {
         search: value => { catalogState.search = value; catalogState.favorites = false; pages.catalog = 0; location.hash = 'catalogo'; load(); },
-        category: value => { catalogState.category = value; catalogState.favorites = false; pages.catalog = 0; location.hash = 'catalogo'; load(); }
+        category: value => { catalogState.category = value; catalogState.search = ''; catalogState.favorites = false; pages.catalog = 0; document.getElementById('storeQuery').value=''; location.hash = 'catalogo'; load(); }
       } : {})
     });
     if (role === 'cliente') navigation.firstChild.remove();
@@ -287,7 +288,7 @@
     }
 
     const initialParams = new URLSearchParams(location.search);
-    const catalogState = { search: initialParams.get('busca') || '', category: initialParams.get('categoria') || '', favorites: false };
+    const catalogState = { search: initialParams.get('busca') || '', category: initialParams.get('categoria') || '', favorites: location.hash === '#favoritos', sort: 'recentes' };
     let catalogOffline=false;
     async function paymentsForRole() {
       try { return await rpc('pagamentos') || []; }
@@ -297,6 +298,7 @@
       const payments = await paymentsForRole();
       const savedFavorites=await RaizApi.all(db,'cliente_favoritos','id,produto_id');
       const catalogResult=await RaizApi.catalog(db,{page:pages.catalog||0,search:catalogState.search,category:catalogState.category,
+        order:catalogState.sort==='recentes'?'id':'preco',ascending:catalogState.sort==='menor-preco',
         ...(catalogState.favorites?{ids:savedFavorites.map(f=>f.produto_id)}:{})});
       catalogOffline=catalogResult.offline;
       const [products, profile, favorites, cart, orders, items] = await Promise.all([
@@ -317,20 +319,29 @@
         }
       }
       setIdentity(profile[0]?.nome);
+      RaizCustomer.servicebar(main,profile[0]);
       RaizShell.updateCart(cart.reduce((sum, item) => sum + item.quantidade, 0));
       if (role === 'cliente') title.textContent = profile[0]?.nome ? 'Olá, ' + profile[0].nome + '.' : 'Minha conta';
       items.push(...await RaizApi.related(db,'cliente_itens_pedido','id,pedido_id,produto_nome,quantidade,preco_unitario','pedido_id',orders.map(o=>o.id)));
-      const cartProducts=await RaizApi.related(db,'cliente_produtos','id,nome,preco,estoque,loja_id','id',cart.map(i=>i.produto_id));
-      const catalog = section('Catálogo', 'catalogo', 'Catálogo');
+      const cartProducts=await RaizApi.related(db,'cliente_produtos','id,nome,categoria,preco,estoque,loja_id','id',cart.map(i=>i.produto_id));
+      const catalog = section(catalogState.favorites ? 'Seus favoritos' : catalogState.search ? 'Resultados da busca' : catalogState.category ? RaizCustomer.labels[catalogState.category] : 'Todos os produtos', 'catalogo', 'Comprar');
+      const chooseCategory = value => {catalogState.category=value;catalogState.search='';catalogState.favorites=false;pages.catalog=0;location.hash='catalogo';document.getElementById('storeQuery').value='';load();};
+      const heading = el('div',null,'shop-heading');
+      const headingCopy = el('div');headingCopy.append(catalog.firstChild,el('p',catalogResult.total+' resultado(s)'+(catalogState.search?' para “'+catalogState.search+'”':''),'shop-result-count'));
+      const orderLabel=el('label','Ordenar por','shop-sort-label');const order=el('select');
+      for(const [value,label] of [['recentes','Mais recentes'],['menor-preco','Menor preço'],['maior-preco','Maior preço']]){const option=el('option',label);option.value=value;order.append(option);}
+      order.value=catalogState.sort;order.onchange=()=>{catalogState.sort=order.value;pages.catalog=0;load();};orderLabel.append(order);
+      heading.append(headingCopy,orderLabel);catalog.append(heading);
+      if(!catalogState.search && !catalogState.category && !catalogState.favorites)RaizCustomer.intro(catalog,chooseCategory);
       if(shoppingNotice) catalog.append(el('p',shoppingNotice,'raiz-notice'));
       const favoritesShortcut = el('a', 'Favoritos', 'nav-btn');
-      favoritesShortcut.href = '#catalogo';
+      favoritesShortcut.href = '#favoritos';
       favoritesShortcut.dataset.section = 'favoritos';
       favoritesShortcut.onclick = event => {
         event.preventDefault();
         catalogState.favorites = true;
         pages.catalog = 0;
-        if (location.hash !== '#catalogo') location.hash = 'catalogo';
+        if (location.hash !== '#favoritos') location.hash = 'favoritos';
         load();
       };
       sectionNav.append(favoritesShortcut);
@@ -340,8 +351,11 @@
       const [categoryLabel, category] = selectCategory(catalogState.category, true);
       const [favoriteLabel, onlyFavorites] = field('Somente favoritos','checkbox', catalogState.favorites);
       const filters = el('aside', null, 'raiz-filters');
+      filters.id='shopFilters';
       filters.setAttribute('aria-label', 'Filtros do catálogo');
-      filters.append(searchLabel,categoryLabel,favoriteLabel);
+      filters.append(el('h3','Filtrar produtos'),searchLabel,categoryLabel,favoriteLabel);
+      const filterToggle=el('button',null,'shop-mobile-filters');filterToggle.type='button';filterToggle.append(RaizCustomer.icon('filter'),document.createTextNode('Filtros'));filterToggle.setAttribute('aria-controls',filters.id);filterToggle.setAttribute('aria-expanded','false');
+      filterToggle.onclick=()=>{const open=filters.classList.toggle('is-open');filterToggle.setAttribute('aria-expanded',String(open));};heading.append(filterToggle);
       const results = el('div', null, 'raiz-catalog-results');
       const catalogLayout = el('div', null, 'raiz-catalog-layout');
       catalogLayout.append(filters,results);
@@ -360,32 +374,34 @@
         list(results, products.filter(p => (!category.value || p.categoria === category.value) &&
           (!onlyFavorites.checked || favoriteIds.has(p.id)) &&
           (p.nome + ' ' + p.vendedor_nome).toLocaleLowerCase('pt-BR').includes(term)), p => {
-          const details = el('details');
-          details.append(el('summary','Detalhes'), el('p',p.descricao || 'Descrição indisponível.'), el('p',p.cuidados));
-          const row = card(p.nome,el('p',p.vendedor_nome, 'raiz-muted'),el('strong',money.format(p.preco), 'raiz-price'),details);
-          row.classList.add('raiz-product-card');
-          const art = el('div', p.emoji || icons[p.categoria] || '🌿', 'raiz-product-art');
-          art.dataset.category = p.categoria;
-          art.setAttribute('aria-hidden','true');
-          row.prepend(art);
-          const categoryLabel = el('p', p.categoria, 'raiz-product-category');
-          art.after(categoryLabel);
+          const row=el('article',null,'shop-product');row.dataset.category=p.categoria;
+          const target='../produto.html?id='+encodeURIComponent(p.id);
+          const picture=el('a',null,'shop-picture');picture.href=target;picture.setAttribute('aria-label','Ver '+p.nome);picture.append(RaizCustomer.art(p),el('small','Imagem ilustrativa'));
+          const body=el('div',null,'shop-product-body');
+          const name=el('h3');const productLink=el('a',p.nome);productLink.href=target;name.append(productLink);
+          const detail=el('a','Ver detalhes','shop-details');detail.href=target;
+          body.append(el('span',RaizCustomer.labels[p.categoria]||p.categoria,'shop-product-category'),name,el('span','Vendido por '+p.vendedor_nome,'shop-seller'),el('strong',money.format(p.preco),'shop-price'),el('span',p.estoque>0?'Em estoque':'Indisponível','shop-stock'),detail);
+          row.append(picture,body);
           if (profile.length && !catalogOffline) {
-            const favorite = action(favoriteIds.has(p.id) ? 'Remover favorito' : 'Favoritar', () => setItem(p.id,0,!favoriteIds.has(p.id)));
-            favorite.classList.add('raiz-secondary');
+            const favorite = action('', () => setItem(p.id,0,!favoriteIds.has(p.id)));
+            favorite.className='shop-favorite';favorite.setAttribute('aria-label',(favoriteIds.has(p.id)?'Remover favorito: ':'Favoritar: ')+p.nome);favorite.setAttribute('aria-pressed',String(favoriteIds.has(p.id)));favorite.append(RaizCustomer.icon('heart'));
             row.append(favorite);
             const quantity = cart.find(item => item.produto_id === p.id)?.quantidade || 0;
-            if (p.loja_id && p.estoque > quantity) row.append(action('Adicionar ao carrinho', () => setItem(p.id,quantity+1)));
+            const add=action('Adicionar ao carrinho', () => setItem(p.id,quantity+1), 'Produto adicionado ao carrinho.');add.className='shop-primary';add.disabled=!p.loja_id || p.estoque<=quantity;body.append(add);
+          } else {
+            const register=el('a',catalogOffline?'Ver produto':'Cadastrar endereço','shop-primary');register.href=catalogOffline?target:'#conta';body.append(register);
           }
           return row;
         }, 'Nenhum produto encontrado.');
       }
-      function searchServer(){Object.assign(catalogState,{search:search.value,category:category.value,favorites:onlyFavorites.checked});pages.catalog=0;load();}
+      function searchServer(){Object.assign(catalogState,{search:search.value,category:category.value,favorites:onlyFavorites.checked});pages.catalog=0;location.hash=onlyFavorites.checked?'favoritos':'catalogo';load();}
       search.onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();searchServer();}};
       category.onchange=onlyFavorites.onchange=searchServer;
       filters.append(button('Buscar',searchServer));
+      const clear=button('Limpar filtros',()=>{Object.assign(catalogState,{search:'',category:'',favorites:false});pages.catalog=0;location.hash='catalogo';document.getElementById('storeQuery').value='';load();});clear.className='shop-clear';filters.append(clear);
       filter();pager(catalog,'catalog',catalogResult.total);
       const basket = section('Carrinho', 'carrinho');
+      const continueShopping=el('a','Continuar comprando','shop-continue');continueShopping.href='#catalogo';basket.firstChild.after(continueShopping);
       if(shoppingNotice) basket.append(el('p',shoppingNotice,'raiz-notice'));
       const basketLayout = el('div', null, 'raiz-basket-layout');
       const lines = el('div', null, 'raiz-cart-lines');
@@ -395,8 +411,11 @@
         const p = cartProducts.find(product => product.id === item.produto_id);
         const [label,qty] = field('Quantidade','number',item.quantidade);
         qty.min = 1; qty.max = 99;
-        return card(p?.nome || 'Produto indisponível', el('p', p ? money.format(p.preco) + ' por unidade' : 'Preço indisponível'), label,action('Atualizar quantidade', () => setItem(item.produto_id,Number(qty.value))),
-          action('Remover', () => setItem(item.produto_id,0)));
+        const row=el('article',null,'raiz-card shop-cart-line');
+        const picture=el('div',null,'shop-cart-picture');picture.append(RaizCustomer.art({categoria:p?.categoria||'plantas'}));
+        const info=el('div',null,'shop-cart-info');const controls=el('div',null,'shop-cart-controls');
+        controls.append(label,action('Atualizar quantidade', () => {if(!qty.checkValidity())throw new Error('Confira a quantidade.');return setItem(item.produto_id,Number(qty.value));}),action('Remover', () => setItem(item.produto_id,0)));
+        info.append(el('h3',p?.nome||'Produto indisponível'),el('p',p?money.format(p.preco)+' por unidade':'Preço indisponível'),controls);row.append(picture,info);return row;
       }, 'Seu carrinho está vazio.');
       const summary = el('aside', null, 'raiz-checkout');
       if (cart.length) {
@@ -416,13 +435,13 @@
             action('Confirmar pedido e simular pagamento',async()=>{
               checkoutId ||= crypto.randomUUID();
               const id=await rpc('checkout_pagamento',{p_requisicao:checkoutId,p_metodo:choice.method.value,p_parcelas:Number(choice.installments.value)});
-              checkoutId=null;return id;
+              checkoutId=null;location.hash='pedidos';return id;
             },id=>'Pedido #'+id+' reservado. Aguardando pagamento de demonstração.'));
         } else {
           summary.append(el('p','Registro sem cobrança. Finalize um pedido por loja.'),
             action('Registrar pedido sem pagamento',async()=>{
               checkoutId ||= crypto.randomUUID();
-              const id=await rpc('checkout',{p_requisicao:checkoutId});checkoutId=null;return id;
+              const id=await rpc('checkout',{p_requisicao:checkoutId});checkoutId=null;location.hash='pedidos';return id;
             },id=>'Pedido #'+id+' registrado. Nenhum pagamento foi processado.'));
         }
       }
@@ -457,6 +476,7 @@
       const [addressLabel, addressInput] = field('Endereço completo','text',profile[0]?.endereco);
       if (!profile.length) address.append(el('p',shoppingNotice || 'Salve seu endereço para liberar favoritos, carrinho e pedidos.'));
       address.append(addressLabel, action('Salvar endereço', () => rpc('endereco',{p_endereco:addressInput.value})));
+      navigation.className='shop-account-actions';address.append(navigation);
     }
 
     function productForm(p = {}) {
@@ -623,7 +643,7 @@
     async function load(success = '', duringAction = false) {
       if (busy && !duringAction) return;
       busy = true;
-      feedback.textContent = 'Carregando dados de ' + (RaizDB.backendLabel || 'Supabase') + '…';
+      feedback.textContent = role==='cliente'?'Carregando…':'Carregando dados de ' + (RaizDB.backendLabel || 'Supabase') + '…';
       try {
         content.replaceChildren();
         sectionNav.replaceChildren();
@@ -640,6 +660,7 @@
         [...sectionNav.children]
           .sort((a,b)=>rank(a.dataset.section)-rank(b.dataset.section))
           .forEach(link=>sectionNav.append(link));
+        if(role==='cliente')RaizCustomer.navigation(sectionNav);
         mobileNav.replaceChildren(...[...sectionNav.querySelectorAll('a')].map(item => {
           const link = el('a', item.textContent, 'nav-btn');
           link.href = item.href;
@@ -664,6 +685,9 @@
       }
     }
     function cancellation(parent,id){
+      if(role==='cliente'){
+        const details=el('details',null,'shop-cancellation');details.append(el('summary','Cancelar este pedido'));parent.append(details);parent=details;
+      }
       const [label,reason]=field('Motivo do cancelamento','text');reason.maxLength=300;
       parent.append(label,action('Cancelar pedido',()=>{
         if(reason.value.trim().length<3)throw {code:'P0001',message:'Informe um motivo com pelo menos 3 caracteres.'};
@@ -709,8 +733,12 @@
     }
     await load();
     function syncNavigation() {
-      const current = role === 'cliente' && location.hash === '#catalogo' && catalogState.favorites
+      let current = role === 'cliente' && catalogState.favorites && ['#catalogo','#favoritos'].includes(location.hash)
         ? 'favoritos' : location.hash.slice(1) || sectionNav.querySelector('a')?.dataset.section;
+      if(role==='cliente'){
+        if(!['catalogo','favoritos','carrinho','pedidos','conta','privacidade'].includes(current))current='catalogo';
+        RaizCustomer.show(content,current);
+      }
       for (const link of [...sectionNav.querySelectorAll('a'), ...mobileNav.querySelectorAll('a')]) {
         const selected = link.dataset.section === current;
         link.classList.toggle('active', selected);
@@ -719,7 +747,15 @@
       }
       if (role !== 'cliente') title.textContent = document.getElementById(current)?.querySelector('h2')?.textContent || RaizAccess.labels[role];
     }
-    window.addEventListener('hashchange', syncNavigation);
+    window.addEventListener('hashchange', () => {
+      if(role==='cliente' && !busy)feedback.textContent='';
+      if(role==='cliente' && ['#catalogo','#favoritos',''].includes(location.hash)){
+        const favorites=location.hash==='#favoritos';
+        if(catalogState.favorites!==favorites){catalogState.favorites=favorites;pages.catalog=0;load();}
+      }
+      syncNavigation();
+      if(role==='cliente')window.scrollTo({top:0,behavior:'instant'});
+    });
     window.addEventListener('unhandledrejection',()=>{void RaizApi.event(db,'erro',role);});
     window.addEventListener('error',()=>{void RaizApi.event(db,'erro',role);});
   }

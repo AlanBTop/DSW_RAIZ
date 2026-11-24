@@ -39,6 +39,7 @@
     if(options.ids)rows=rows.filter(r=>options.ids.includes(r[options.idColumn || 'id']));
     const term=cleanSearch(options.search).toLocaleLowerCase('pt-BR');
     if(term)rows=rows.filter(r=>(options.searchColumns || ['nome']).some(k=>String(r[k] || '').toLocaleLowerCase('pt-BR').includes(term)));
+    if(options.order)rows=[...rows].sort((a,b)=>(a[options.order]>b[options.order]?1:a[options.order]<b[options.order]?-1:0)*(options.ascending===false?-1:1));
     return rows;
   }
   async function page(db,view,columns,options={}) {
@@ -130,7 +131,7 @@
   }
   async function catalog(db,options) {
     const cacheable=!options.ids;
-    const key=JSON.stringify({page:options.page || 0,search:cleanSearch(options.search),category:options.category || ''});
+    const key=JSON.stringify({page:options.page || 0,search:cleanSearch(options.search),category:options.category || '',order:options.order||'id',ascending:options.ascending!==false});
     try {
       const result=await page(db,'cliente_produtos','id,nome,categoria,vendedor_nome,preco,estoque,descricao,cuidados,loja_id,emoji',{
         ...options,searchColumns:['nome','vendedor_nome']

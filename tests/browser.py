@@ -47,19 +47,22 @@ try:
             for role in ('cliente','vendedor','entregador','admin'):
                 c=context(browser,role,width=360);page=c.new_page();page.on('pageerror',lambda e:errors.append(str(e)))
                 page.goto(base+role+'/')
-                try:expect(page.locator('#privacidade')).to_be_visible()
+                try:expect(page.locator('#privacidade')).to_be_attached()
                 except:print('DIAGNOSTICO',role,page.evaluate('window.__qaFatal'),flush=True);raise
                 expect(page.locator('.raiz-feedback')).to_have_text('')
                 assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1'),role+' transbordou'
                 if role=='cliente':
                     expect(page.locator('#carrinho')).to_contain_text('Cacto fora dos cem')
+                    page.get_by_role('button',name='Filtros',exact=True).click()
                     search=page.locator('#catalogo input[type=search]');search.fill('Cacto fora dos cem');search.press('Enter');expect(page.locator('#catalogo')).to_contain_text('1 resultado(s)')
                     expect(page.locator('#catalogo')).to_contain_text('Cacto fora dos cem')
                     cached=page.evaluate("""async()=>{const db=await new Promise(resolve=>{const r=indexedDB.open('raiz_catalogo_publico_v1',1);r.onsuccess=()=>resolve(r.result)});return new Promise(resolve=>{const r=db.transaction('paginas').objectStore('paginas').getAll();r.onsuccess=()=>resolve(r.result)})}""")
                     assert cached and all(not {'endereco','telefone','usuario_id','cliente_id'}.intersection(row) for entry in cached for row in entry['data']['rows'])
+                    page.locator('.customer-nav a[href="#pedidos"]').click()
                     page.get_by_label('Confirmo que recebi os produtos').check();page.get_by_role('button',name='Confirmar recebimento').click();expect(page.locator('#pedidos')).to_contain_text('Recebimento confirmado em')
                     page.locator('#pedidos summary').filter(has_text='Avaliar a loja').click();page.get_by_role('button',name='Salvar avaliação').click();expect(page.locator('.raiz-feedback')).to_contain_text('Avaliação da loja salva')
-                    page.get_by_label('Motivo do cancelamento').fill('Não preciso mais');page.get_by_role('button',name='Cancelar pedido').click();expect(page.locator('#pedidos')).to_contain_text('Cancelado')
+                    page.get_by_text('Cancelar este pedido',exact=True).click();page.get_by_label('Motivo do cancelamento').fill('Não preciso mais');page.get_by_role('button',name='Cancelar pedido').click();expect(page.locator('#pedidos')).to_contain_text('Cancelado')
+                    page.locator('.customer-nav a[href="#privacidade"]').click()
                     page.get_by_label('Li e aceito os termos').check();page.get_by_role('button',name='Registrar aceite').click();expect(page.locator('#privacidade')).to_contain_text('Aceite dos termos registrado')
                     page.get_by_text('Solicitar exclusão da minha conta',exact=True).click();page.get_by_label('Digite EXCLUIR MINHA CONTA').fill('EXCLUIR MINHA CONTA');page.get_by_role('button',name='Enviar solicitação de exclusão').click();expect(page.locator('#privacidade')).to_contain_text('Protocolo')
                     # O RLS é coberto pela suíte SQL; aqui verificamos bloqueio de tela.

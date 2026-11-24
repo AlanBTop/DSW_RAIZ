@@ -15,7 +15,7 @@
   function announce(text,error=false){status.textContent=text;status.classList.toggle('store-error',error);}
   function url(path,query={}){const u=new URL(path,location.href);for(const [k,v]of Object.entries(query))if(v!==''&&v!==undefined)u.searchParams.set(k,v);return u.pathname+u.search;}
   function categoryUrl(category){return url('index.html',{categoria:category});}
-  function art(product,large=false){const e=node('div',product.emoji||icons[product.categoria]||'🌿','store-art'+(large?' store-art-large':''));e.dataset.category=product.categoria;e.setAttribute('aria-hidden','true');return e;}
+  function art(product,large=false){const e=node('div',undefined,'store-art'+(large?' store-art-large':''));if(pageType==='catalog')e.textContent=product.emoji||icons[product.categoria]||'🌿';else {const img=node('img');img.src='assets/catalog-'+(labels[product.categoria]?product.categoria:'plantas')+'.svg';img.alt='';img.width=320;img.height=260;e.append(img);}e.dataset.category=product.categoria;e.setAttribute('aria-hidden','true');return e;}
   function count(){const total=RaizShopping.cart().reduce((sum,r)=>sum+r.quantity,0);document.getElementById('storeCartCount').textContent=String(total);}
   RaizShell.mount();
   count();window.addEventListener('raiz-cart-updated',count);window.addEventListener('storage',count);
@@ -105,7 +105,7 @@
     const p=rows[0];if(!p)return unavailable();
     document.title=p.nome+' · RAIZ';main.replaceChildren();
     const crumbs=node('nav',undefined,'store-breadcrumb');crumbs.setAttribute('aria-label','Você está em');crumbs.append(link('Todos os produtos','index.html'),node('span','/'),link(labels[p.categoria]||'Categoria',categoryUrl(p.categoria)),node('span','/'),node('span',p.nome));
-    const layout=node('section',undefined,'store-product-layout');const gallery=node('div',undefined,'store-gallery');gallery.append(art(p,true),node('p','Representação ilustrativa do produto.','store-muted'));
+    const layout=node('section',undefined,'store-product-layout');const gallery=node('div',undefined,'store-gallery');gallery.append(art(p,true),node('p','Representação ilustrativa da categoria. Consulte a descrição do anúncio.','store-muted'));
     const info=node('div',undefined,'store-product-info');info.append(node('p',labels[p.categoria]||'Catálogo','store-eyebrow'),node('h1',p.nome),node('p','Vendido por '+p.vendedor_nome,'store-seller'),node('strong',money.format(p.preco),'store-detail-price'),node('p',p.estoque>0?p.estoque+' unidade(s) disponível(is)':'Produto sem estoque','store-availability'));
     const quantityLabel=node('label','Quantidade','store-quantity');const quantity=node('input');quantity.type='number';quantity.min=1;quantity.max=Math.min(99,p.estoque);quantity.value=1;quantityLabel.append(quantity);
     const quantityValue=()=>{if(!quantity.checkValidity()||Number(quantity.value)<1)throw new Error('Confira a quantidade disponível.');return Number(quantity.value);};
@@ -113,8 +113,11 @@
     const buy=button('Comprar agora',()=>{try{purchase([{id:p.id,quantity:quantityValue()}]);}catch(e){announce(e.message,true);}});
     const addButton=button('Adicionar ao carrinho',()=>{try{add(p,quantityValue());}catch(e){announce(e.message,true);}},'store-outline');
     buy.disabled=addButton.disabled=p.estoque<1||!p.loja_id;actions.append(buy,addButton);
-    info.append(quantityLabel,actions,node('p','Explore à vontade. Sua conta será solicitada ao continuar a compra.','store-muted'));
-    layout.append(gallery,info);
+    if(p.descricao)info.append(node('p',p.descricao.length>220?p.descricao.slice(0,217)+'…':p.descricao,'buyer-product-excerpt'));
+    if(p.porte)info.append(node('p','Porte: '+p.porte,'store-muted'));
+    const purchasePanel=node('aside',undefined,'buyer-purchase-panel');purchasePanel.setAttribute('aria-label','Compra do produto');
+    purchasePanel.append(node('h2','Leve mais verde para casa'),node('p','Frete de R$ 15,00 por pedido. Finalize uma compra por loja.','store-muted'),quantityLabel,actions,node('p','Preço, estoque e endereço são conferidos antes de confirmar.','store-muted'),node('p','Projeto acadêmico. O pagamento é simulado, sem cobrança real.','buyer-payment-note'));
+    layout.append(gallery,info,purchasePanel);
     const details=node('section',undefined,'store-description');details.append(node('h2','Sobre o produto'),node('p',p.descricao||'O vendedor ainda não adicionou uma descrição.'),node('h3','Cuidados'),node('p',p.cuidados||'Consulte a loja sobre os cuidados deste produto.'));
     if(p.porte)details.append(node('p','Porte: '+p.porte));if(p.fragil)details.append(node('p','Produto frágil: transporte com cuidado.'));
     main.append(crumbs,layout,details);announce('');
@@ -128,6 +131,7 @@
     for(const row of saved){const p=products.find(p=>p.id===row.id);const key=p?.loja_id||'indisponivel';if(!groups.has(key))groups.set(key,[]);groups.get(key).push({row,p});}
     for(const [store,entries]of groups){
       const section=node('section',undefined,'store-cart-group');section.append(node('h2',store==='indisponivel'?'Itens indisponíveis':entries[0].p.vendedor_nome));
+      const lines=node('div',undefined,'buyer-cart-lines');section.append(lines);
       let subtotal=0,valid=store!=='indisponivel';
       for(const {row,p}of entries){
         const item=node('article',undefined,'store-cart-item');if(p)item.append(art(p));const info=node('div');
@@ -135,7 +139,7 @@
         if(p){info.append(node('p',money.format(p.preco)+' por unidade'));subtotal+=Math.round(Number(p.preco)*100)*row.quantity;if(row.quantity>p.estoque){info.append(node('p','Quantidade acima do estoque disponível.','store-error'));valid=false;}}
         const label=node('label','Quantidade');const q=node('input');q.type='number';q.min=1;q.max=p?Math.min(99,p.estoque):99;q.value=row.quantity;label.append(q);info.append(label);
         info.append(button('Atualizar',()=>{if(!q.checkValidity())return announce('Confira a quantidade disponível.',true);RaizShopping.save(RaizShopping.cart().map(r=>r.id===row.id?{...r,quantity:Number(q.value)}:r));cart().catch(fail);},'store-text-button'),button('Remover',()=>{RaizShopping.save(RaizShopping.cart().filter(r=>r.id!==row.id));cart().catch(fail);},'store-text-button'));
-        item.append(info);section.append(item);
+        item.append(info);lines.append(item);
       }
       if(store!=='indisponivel'){
         const summary=node('div',undefined,'store-cart-summary');summary.append(node('p','Subtotal: '+money.format(subtotal/100)),node('p','Frete: '+money.format(15)),node('strong','Total estimado: '+money.format(subtotal/100+15)));

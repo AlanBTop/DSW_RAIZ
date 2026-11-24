@@ -22,10 +22,10 @@ try:
             else:r.abort()
         context.route('**/*',route);page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
         page.goto(base+'cliente/');summary=page.locator('.raiz-checkout')
-        favorite=page.get_by_role('button',name='Favoritar',exact=True).first
+        favorite=page.get_by_role('button',name='Favoritar:').first
         expect(favorite).to_be_visible()
         assert favorite.evaluate('(e)=>getComputedStyle(e).color!==getComputedStyle(e).backgroundColor')
-        assert page.locator('.bottom-nav a').first.evaluate('(e)=>e.getBoundingClientRect().width<innerWidth/2')
+        page.locator('#siteCart').click()
         expect(summary.get_by_label('Forma de pagamento')).to_be_visible()
         summary.get_by_label('Forma de pagamento').select_option('credit');summary.get_by_label('Parcelas').select_option('3')
         summary.get_by_role('button',name='Confirmar pedido e simular pagamento').click()
