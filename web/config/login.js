@@ -43,6 +43,7 @@
 
     // Trata mensagens de erro ou sucesso no retorno do Google OAuth
     function selectRole(role, cardElement) {
+      if(isRegisterMode && ['vendedor','entregador'].includes(role)){location.href='cadastro-parceiro.html?perfil='+role;return;}
       if (role === "admin" && isRegisterMode) toggleAuthMode();
       currentRole = role;
       document.querySelectorAll('.role-card').forEach(card => {
@@ -60,10 +61,12 @@
 
       document.getElementById('roleBadge').textContent = labels[role];
       document.getElementById('googleBtnText').textContent = 'Continuar com o Google';
+      document.getElementById('toggleLink').textContent=role==='vendedor'?'Cadastrar minha loja':role==='entregador'?'Cadastrar como entregador':'Cadastre-se';
     }
 
     // Alternar entre Login e Cadastro
     function toggleAuthMode() {
+      if(!isRegisterMode && ['vendedor','entregador'].includes(currentRole)){location.href='cadastro-parceiro.html?perfil='+currentRole;return;}
       if (!isRegisterMode && currentRole === "admin") {
         showToast("O perfil administrativo é concedido pela equipe responsável.");
         return;

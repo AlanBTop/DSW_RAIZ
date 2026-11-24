@@ -580,6 +580,7 @@
       search.onkeydown=e=>{if(e.key==='Enter'){adminSearch=search.value;pages.usuarios=0;load();}};
       people.append(button('Buscar',()=>{adminSearch=search.value;pages.usuarios=0;load();}));
       filter();
+      await RaizPartnerRequests.render({db,section,action,button,reload:()=>load()});
       list(section('Moderação de produtos', 'moderacao', 'Catálogo'),products,p => {
         const row = card(p.nome,el('p',p.vendedor_nome + (p.ativo ? ' · ativo' : ' · inativo')));
         if (p.ativo) row.append(action('Desativar produto', () => rpc('moderar_produto',{p_produto:p.id})));
@@ -605,7 +606,7 @@
           cliente:['catalogo','favoritos','carrinho','pedidos','conta','privacidade'],
           vendedor:['visao','pedidos','produtos','loja','estatisticas','privacidade'],
           entregador:['disponibilidade','andamento','ofertas','historico','carteira','privacidade'],
-          admin:['visao','usuarios','moderacao','pedidos','entregas','solicitacoes','eventos','privacidade']
+          admin:['visao','cadastros','usuarios','moderacao','pedidos','entregas','solicitacoes','eventos','privacidade']
         }[role] || [];
         const rank = id => { const index=order.indexOf(id); return index < 0 ? order.length : index; };
         [...sectionNav.children]

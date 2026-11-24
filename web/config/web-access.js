@@ -118,6 +118,10 @@
         if (search.has('expirada')) message('Entre com sua conta para acessar esta área.');
         return;
       }
+      if(active.role==='cliente' && ['vendedor','entregador'].includes(requestedRole)){
+        location.replace('cadastro-parceiro.html?perfil='+requestedRole);
+        return;
+      }
       if (active.role === requestedRole) {
         const target = file(active.role);
         try { sessionStorage.removeItem(destinationKey); } catch (_) {}

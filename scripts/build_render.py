@@ -26,7 +26,7 @@ try:
 finally:
     sys.argv = previous
 
-required = ['index.html', 'produto.html', 'loja.html', 'carrinho.html', 'sobre.html', 'login.html', 'recuperar-senha.html', '404.html',
+required = ['index.html', 'produto.html', 'loja.html', 'carrinho.html', 'sobre.html', 'login.html', 'cadastro-parceiro.html', 'recuperar-senha.html', '404.html',
             'cliente/index.html', 'vendedor/index.html', 'entregador/index.html',
             'admin/index.html', 'config/environment.js', '_headers']
 for name in required:
