@@ -100,7 +100,7 @@
     const workspace = el('main', null, 'main');
     const header = el('header', null, role === 'cliente' ? 'customer-toolbar' : 'topbar');
     const headerCopy = el('div');
-    const title = el(['vendedor','entregador'].includes(role)?'h1':'h2', RaizAccess.labels[role]);
+    const title = el(['vendedor','entregador','admin'].includes(role)?'h1':'h2', RaizAccess.labels[role]);
     const subtitles = {cliente:'RAIZ · Marketplace de Plantas',vendedor:'RAIZ · Área do vendedor',entregador:'RAIZ · Logística Botânica',admin:'RAIZ · Governança'};
     const subtitle = el('div', subtitles[role] + ' · ' + (RaizDB.backendLabel || 'Supabase'), 'tiny muted');
     headerCopy.append(title, subtitle);
@@ -118,6 +118,7 @@
       admin: ['Um ecossistema em crescimento', 'Cuidar de cada detalhe.', 'Acompanhe a operação, os parceiros e o catálogo em um só lugar.']
     };
     function welcome() {
+      if (role === 'admin' && window.RaizAdmin) return;
       if (['cliente','vendedor','entregador'].includes(role)) return;
       if (!partnerCopy[role]) return;
       const [eyebrow, headline, description] = partnerCopy[role];
@@ -156,6 +157,7 @@
       } : {})
     });
     if (role === 'cliente') navigation.firstChild.remove();
+    if (role === 'admin') RaizAdmin.configure({main,sidebar,navigation});
     let sellerLogout, sellerStore, courierLogout, courierProfile;
     if(role==='entregador')courierLogout=RaizCourier.configure({main,sidebar,navigation});
     if(role==='vendedor'){
@@ -205,6 +207,7 @@
     const section = (label, id, navLabel = label) => {
       const element = el('section');
       element.id = id;
+      if (role === 'admin') element.hidden = id !== (location.hash.slice(1) || 'cadastros');
       const heading = el('h2', label);
       heading.id = id + '-titulo';
       element.setAttribute('aria-labelledby', heading.id);
@@ -553,6 +556,7 @@
 
     let adminSearch='';
     async function admin() {
+      await RaizPartnerRequests.render({db,section,action,button,reload:()=>load()});
       const payments=await paymentsForRole();
       const [userResult,orders,trips,products] = await Promise.all([
         features.versao>=4?rpc('usuarios_pagina',{p_busca:adminSearch,p_pagina:pages.usuarios||0}):rpc('usuarios'),query('cliente_pedidos','id,status,total'),query('entregador_corridas','id,status'),
@@ -580,7 +584,6 @@
       search.onkeydown=e=>{if(e.key==='Enter'){adminSearch=search.value;pages.usuarios=0;load();}};
       people.append(button('Buscar',()=>{adminSearch=search.value;pages.usuarios=0;load();}));
       filter();
-      await RaizPartnerRequests.render({db,section,action,button,reload:()=>load()});
       list(section('Moderação de produtos', 'moderacao', 'Catálogo'),products,p => {
         const row = card(p.nome,el('p',p.vendedor_nome + (p.ativo ? ' · ativo' : ' · inativo')));
         if (p.ativo) row.append(action('Desativar produto', () => rpc('moderar_produto',{p_produto:p.id})));
@@ -612,7 +615,7 @@
           cliente:['catalogo','favoritos','carrinho','pedidos','conta','privacidade'],
           vendedor:['visao','pedidos','financeiro','produtos','loja','estatisticas','privacidade'],
           entregador:['disponibilidade','andamento','ofertas','historico','carteira','privacidade'],
-          admin:['visao','cadastros','financeiro','usuarios','moderacao','pedidos','entregas','solicitacoes','eventos','privacidade']
+          admin:['cadastros','visao','usuarios','moderacao','pedidos','entregas','financeiro','solicitacoes','eventos','privacidade']
         }[role] || [];
         const rank = id => { const index=order.indexOf(id); return index < 0 ? order.length : index; };
         [...sectionNav.children]
@@ -621,6 +624,7 @@
         if(role==='cliente')RaizCustomer.navigation(sectionNav);
         if(role==='vendedor')RaizSeller.decorateNav(sectionNav);
         if(role==='entregador')RaizCourier.decorateNav(sectionNav);
+        if(role==='admin')RaizAdmin.decorateNav(sectionNav);
         mobileNav.replaceChildren(...[...sectionNav.querySelectorAll('a')].map(item => {
           const link = el('a', item.textContent, 'nav-btn');
           link.href = item.getAttribute('href');
@@ -635,12 +639,14 @@
           const parent=id && document.getElementById(id);if(parent)pager(parent,view,total);
         }
         feedback.textContent = success;
+        if(role==='admin'&&success){const heading=content.querySelector('section:not([hidden]) > h2');if(heading){heading.tabIndex=-1;heading.focus({preventScroll:true});}}
         if (!duringAction && location.hash) {
-          if(['cliente','vendedor','entregador'].includes(role))window.scrollTo({top:0,behavior:'instant'});
+          if(['cliente','vendedor','entregador','admin'].includes(role))window.scrollTo({top:0,behavior:'instant'});
           else document.getElementById(location.hash.slice(1))?.scrollIntoView();
         }
       } catch (error) {
         feedback.textContent = RaizApi.errorText(error);
+        if(role==='admin')syncNavigation();
         void RaizApi.event(db,'erro',role);
       } finally {
         busy = false;
@@ -699,6 +705,7 @@
         ? 'favoritos' : location.hash.slice(1) || sectionNav.querySelector('a')?.dataset.section;
       if(role==='vendedor')current=RaizSeller.show(content,location.hash.slice(1));
       if(role==='entregador')current=RaizCourier.show(content,location.hash.slice(1));
+      if(role==='admin')current=RaizAdmin.show(content,location.hash.slice(1));
       if(role==='cliente'){
         if(!['catalogo','favoritos','carrinho','pedidos','conta','privacidade'].includes(current))current='catalogo';
         RaizCustomer.show(content,current);
@@ -709,7 +716,7 @@
         if (selected) link.setAttribute('aria-current', 'page');
         else link.removeAttribute('aria-current');
       }
-      if (role !== 'cliente') title.textContent = document.getElementById(current)?.querySelector('h2')?.textContent || RaizAccess.labels[role];
+      if (role !== 'cliente') title.textContent = role==='admin'?'Painel administrativo':document.getElementById(current)?.querySelector('h2')?.textContent || RaizAccess.labels[role];
     }
     window.addEventListener('hashchange', () => {
       if(['cliente','vendedor','entregador'].includes(role) && !busy)feedback.textContent='';
@@ -718,7 +725,7 @@
         if(catalogState.favorites!==favorites){catalogState.favorites=favorites;pages.catalog=0;load();}
       }
       syncNavigation();
-      if(['cliente','vendedor','entregador'].includes(role))window.scrollTo({top:0,behavior:'instant'});
+      if(['cliente','vendedor','entregador','admin'].includes(role))window.scrollTo({top:0,behavior:'instant'});
     });
     window.addEventListener('unhandledrejection',()=>{void RaizApi.event(db,'erro',role);});
     window.addEventListener('error',()=>{void RaizApi.event(db,'erro',role);});

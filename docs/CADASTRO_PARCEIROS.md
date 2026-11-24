@@ -11,7 +11,11 @@ O cadastro de clientes continua em `login.html`. O botão de cadastro dos perfis
 5. **Análise:** a solicitação recebe protocolo e fica Pendente. O candidato acompanha a situação na mesma página, inclusive após entrar novamente.
 6. **Decisão administrativa:** no painel `admin/index.html?modo=online#cadastros`, o administrador aprova ou informa um motivo de recusa. A aprovação cria a loja/perfil e o vínculo em uma transação. Uma solicitação recusada pode ser revisada e reenviada, criando outro protocolo e preservando a decisão anterior.
 
-A fila mostra o número de solicitações pendentes, filtro por situação e paginação. Não há envio de e-mail administrativo; as solicitações são recebidas no painel. O candidato consulta o resultado pela página de acompanhamento. Vendedores e entregadores existentes mantêm seus vínculos. Uma conta que já tenha cadastro de cliente deve usar outro e-mail para o perfil de parceiro, preservando o acesso às compras.
+A fila é a entrada padrão após o login administrativo, inclusive quando existir um antigo destino financeiro salvo. Uma visita direta ao painel sem seção também abre `#cadastros`; as outras áreas continuam disponíveis no menu, com uma seção visível por vez.
+
+A página mostra o número total de pendências, o total da situação selecionada, filtro, paginação e orientações para a análise. O administrador abre os dados completos em um diálogo e confirma a aprovação ou informa um motivo de recusa. Durante o envio, decisões repetidas são bloqueadas; erros mantêm o motivo preenchido. O estado indisponível é distinto de uma fila vazia. A remoção da última solicitação de uma página corrige a paginação automaticamente.
+
+Não há envio de e-mail administrativo; as solicitações são recebidas no painel. O candidato consulta o resultado pela página de acompanhamento. Vendedores e entregadores existentes mantêm seus vínculos. Uma conta que já tenha cadastro de cliente deve usar outro e-mail para o perfil de parceiro, preservando o acesso às compras.
 
 ## Ativação no Supabase
 
@@ -28,6 +32,7 @@ Sem as novas funções, a página apresenta uma mensagem de preparação e não 
 ## Verificações
 
 - `python tests/partner_registration.py`: formulário em etapas, retorno após confirmação, pendência, recusa, reenvio, fila administrativa e cadastro de cliente preservado em 1440, 390 e 320 pixels, com API de teste.
+- `python tests/partner_registration.py --admin-only`: verificação focada no painel em desktop, tablet e celular, decisões, confirmação, paginação, falha/repetição, vazio e redirecionamento do login.
 - `python tests/partner_registration_sql.py`: oito migrations em PostgreSQL temporário, isolamento, bloqueio de autoaprovação, recusa/reenvio, aprovação simultânea por dois administradores criando uma única loja, veículo inicialmente offline e preservação dos clientes.
 - `python tests/browser.py`: regressão de autenticação, recuperação de senha e operações existentes em Edge e Chrome.
 
