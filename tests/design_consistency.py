@@ -52,7 +52,8 @@ try:
                       searchHeight:search.getBoundingClientRect().height, color:getComputedStyle(brand).color};
                 }''')
                 if header_metrics is None: header_metrics = metrics
-                assert metrics == header_metrics, (width, path, header_metrics, metrics)
+                compared = ('brand','size','color','searchHeight') if role=='vendedor' else tuple(metrics)
+                assert all(metrics[key]==header_metrics[key] for key in compared), (width,path,header_metrics,metrics)
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1'), (width, path)
                 if width in (390, 1440) and path in ('', 'cliente/index.html?modo=online', 'login.html'):
                     page.screenshot(path=str(out / (('cliente' if role else 'login' if path else 'inicio') + f'-{width}.png')))

@@ -100,7 +100,7 @@
     const workspace = el('main', null, 'main');
     const header = el('header', null, role === 'cliente' ? 'customer-toolbar' : 'topbar');
     const headerCopy = el('div');
-    const title = el('h2', RaizAccess.labels[role]);
+    const title = el(role==='vendedor'?'h1':'h2', RaizAccess.labels[role]);
     const subtitles = {cliente:'RAIZ · Marketplace de Plantas',vendedor:'RAIZ · Área do vendedor',entregador:'RAIZ · Logística Botânica',admin:'RAIZ · Governança'};
     const subtitle = el('div', subtitles[role] + ' · ' + (RaizDB.backendLabel || 'Supabase'), 'tiny muted');
     headerCopy.append(title, subtitle);
@@ -118,7 +118,7 @@
       admin: ['Um ecossistema em crescimento', 'Cuidar de cada detalhe.', 'Acompanhe a operação, os parceiros e o catálogo em um só lugar.']
     };
     function welcome() {
-      if (role === 'cliente') return;
+      if (['cliente','vendedor'].includes(role)) return;
       if (!partnerCopy[role]) return;
       const [eyebrow, headline, description] = partnerCopy[role];
       const hero = el('section', null, 'partner-hero');
@@ -156,6 +156,12 @@
       } : {})
     });
     if (role === 'cliente') navigation.firstChild.remove();
+    let sellerLogout, sellerStore;
+    if(role==='vendedor'){
+      sellerLogout=navigation.lastChild;sellerLogout.remove();
+      navigation.firstChild.textContent='Ver marketplace';
+      RaizSeller.configure({main,sidebar,navigation,onSearch:value=>{sellerState.search=value;pages.vendedor_produtos=0;location.hash='produtos';load();}});
+    }
 
     async function call(promise) {
       const { data, error } = await promise;
@@ -164,7 +170,7 @@
     }
 
     const pages = {}, totals = {};
-    let sellerSearch = '';
+    const sellerState={search:'',category:'',availability:'',status:''};
     const paged = {
       cliente_produtos:'moderacao',
       vendedor_produtos:'produtos',vendedor_pedidos:'pedidos',cliente_pedidos:'pedidos',
@@ -173,7 +179,10 @@
     const query = async (view, columns) => {
       if (!paged[view]) return RaizApi.all(db,view,columns);
       const result=await RaizApi.page(db,view,columns,{page:pages[view]||0,
-        ...(view==='vendedor_produtos'?{search:sellerSearch}:{}),
+        ...(view==='vendedor_produtos'?{search:sellerState.search,category:sellerState.category,
+          ...(['ativos','pausados'].includes(sellerState.availability)?{active:sellerState.availability==='ativos'}:{}),
+          ...(sellerState.availability==='sem-estoque'?{stock:0}:{})}:{}),
+        ...(view==='vendedor_pedidos' && sellerState.status?{status:sellerState.status}:{}),
         ...(view==='entregador_corridas' && role==='entregador'?{status:'Em andamento'}:{}),
         ascending:!view.includes('pedidos') && view!=='entregador_historico'});
       totals[view]=result.total;return result.rows;
@@ -488,10 +497,12 @@
       const [categoryLabel,category] = selectCategory(p.categoria);
       const [priceLabel,price] = field('Preço (R$)','number',p.preco);
       const [stockLabel,stock] = field('Estoque','number',p.estoque);
-      const [descLabel,desc] = field('Descrição','text',p.descricao);
+      const descLabel=el('label','Descrição');const desc=el('textarea');desc.value=p.descricao||'';desc.rows=3;descLabel.append(desc);
       const [activeLabel,enabled] = field('Ativo','checkbox',p.ativo ?? true);
       const fields = el('div',null,'raiz-actions');
+      fields.classList.add('seller-product-form');
       price.min = stock.min = 0; price.step = '0.01';
+      stock.step='1';name.maxLength=150;desc.maxLength=3000;
       fields.append(nameLabel,categoryLabel,priceLabel,stockLabel,descLabel,activeLabel,action('Salvar produto', () => {
         if (!name.value.trim() || !price.value || !stock.value || !price.checkValidity() || !stock.checkValidity()) {
           throw new Error('Confira nome, preço e estoque.');
@@ -504,58 +515,20 @@
 
     async function seller() {
       const payments=await paymentsForRole();
-      const [stores, products, orders, items, sales] = await Promise.all([
+      const [stores,products,orders,sales,counts,recent,empty]=await Promise.all([
         query('vendedor_lojas','nome,endereco,horario_funcionamento'),
         query('vendedor_produtos','id,nome,categoria,preco,estoque,ativo,descricao'),
         query('vendedor_pedidos','id,status,total,data_pedido,cliente_nome'),
-        Promise.resolve([]),
-        query('vendedor_vendas_diarias','id,dia_semana,valor,data_referencia')
+        query('vendedor_vendas_diarias','id,dia_semana,valor,data_referencia'),
+        RaizSeller.summary(db),
+        RaizApi.page(db,'vendedor_pedidos','id,status,total,data_pedido,cliente_nome',{page:0,ascending:false}),
+        RaizApi.page(db,'vendedor_produtos','id,nome,categoria,estoque,ativo',{page:0,stock:0,active:true})
       ]);
-      setIdentity(stores[0]?.nome);
-      items.push(...await RaizApi.related(db,'vendedor_itens_pedido','id,pedido_id,produto_nome,quantidade','pedido_id',orders.map(o=>o.id)));
-      const overview = section('Visão geral desta página', 'visao', 'Início');
-      metrics(overview,[['Pedidos aguardando preparo',orders.filter(o => o.status === 'Pendente').length],['Produtos ativos',products.filter(p => p.ativo).length],['Produtos sem estoque',products.filter(p => p.estoque === 0).length]]);
-      const statistics = section('Estatísticas de vendas', 'estatisticas', 'Estatísticas');
-      metrics(statistics,[['Vendas registradas',money.format(sales.reduce((sum,row)=>sum+Number(row.valor||0),0))],['Registros diários',sales.length]]);
-      list(statistics,sales,row=>card(row.dia_semana,el('p',money.format(row.valor)+' · '+new Date(row.data_referencia+'T12:00:00').toLocaleDateString('pt-BR'))),'Sem registros de vendas neste período.');
-      const store = section('Minha loja', 'loja', 'Loja');
-      for (const s of stores) store.append(el('p',[s.nome,s.endereco,s.horario_funcionamento].filter(Boolean).join(' · ')));
-      for (const s of stores) if(RaizMaps.search(s.endereco)) store.append(mapLink(RaizMaps.search(s.endereco),'Ver loja no Google Maps'));
-      if (!stores.length) {
-        store.append(el('p','A equipe responsável precisa vincular sua conta a uma loja.'));
-        return;
-      }
-      const inventory = section('Produtos', 'produtos', 'Produtos');
-      const newProduct = el('details');
-      newProduct.className = 'raiz-create';
-      newProduct.append(el('summary','Cadastrar produto','raiz-button'),productForm());
-      inventory.append(newProduct);
-      const [searchLabel, search] = field('Buscar produto no estoque','search',sellerSearch);
-      const stock = el('div', null, 'raiz-stock-list');
-      inventory.append(searchLabel,stock);
-      const filter = () => {
-        stock.replaceChildren();
-        const term = search.value.trim().toLocaleLowerCase('pt-BR');
-        list(stock, products.filter(p => p.nome.toLocaleLowerCase('pt-BR').includes(term)),p => {
-          const details = el('details');
-          details.append(el('summary','Editar produto'),productForm(p));
-          return card(p.nome,el('span',p.ativo ? 'Ativo' : 'Inativo', 'raiz-status ' + (p.ativo ? 'raiz-positive' : '')),el('p',money.format(p.preco) + ' · ' + p.estoque + ' em estoque'),details);
-        },'Nenhum produto encontrado.');
-      };
-      const searchServer=()=>{sellerSearch=search.value;pages.vendedor_produtos=0;load();};
-      search.onkeydown=e=>{if(e.key==='Enter')searchServer();};inventory.append(button('Buscar',searchServer));
-      filter();
-      const orderSection = section('Pedidos da loja', 'pedidos', 'Pedidos');
-      orderSection.append(el('p',orders.length + ' pedidos exibidos · ' + orders.filter(o => o.status === 'Pendente').length + ' aguardando preparo'));
-      list(orderSection,orders,o => {
-        const row = card('#' + o.id + ' · ' + o.status,el('p',o.cliente_nome + ' · ' + money.format(o.total)),
-          ...items.filter(i => i.pedido_id === o.id).map(i => el('p',i.quantidade + ' × ' + i.produto_nome)));
-        const payment=payments?.find(t=>t.pedido_id===o.id);
-        if(payment)row.append(paymentCard(o,payment));
-        if (o.status === 'Pendente' && (payments === null || payment?.estado === 'paid')) row.append(action('Iniciar preparo e disponibilizar entrega', () => rpc('preparo',{p_pedido:o.id})));
-        if(!payment && features.cancelamento && ['Pendente','Em preparo'].includes(o.status)) cancellation(row,o.id);
-        return row;
-      },'Nenhum pedido recebido.');
+      sellerStore=stores[0];setIdentity(sellerStore?.nome);
+      const items=await RaizApi.related(db,'vendedor_itens_pedido','id,pedido_id,produto_nome,quantidade','pedido_id',orders.map(o=>o.id));
+      RaizSeller.render({stores,products,orders,items,sales,counts,recentOrders:recent.rows,emptyProducts:empty.rows,payments,canCancel:features.cancelamento,
+        state:sellerState,totals,section,productForm,action,button,field,selectCategory,list,card,paymentCard,cancellation,
+        reload:key=>{pages[key]=0;load();}});
     }
 
     async function courier() {
@@ -647,16 +620,17 @@
     async function load(success = '', duringAction = false) {
       if (busy && !duringAction) return;
       busy = true;
-      feedback.textContent = role==='cliente'?'Carregando…':'Carregando dados de ' + (RaizDB.backendLabel || 'Supabase') + '…';
+      feedback.textContent = ['cliente','vendedor'].includes(role)?'Carregando…':'Carregando dados de ' + (RaizDB.backendLabel || 'Supabase') + '…';
       try {
         content.replaceChildren();
         sectionNav.replaceChildren();
         welcome();
         await ({cliente:customer,vendedor:seller,entregador:courier,admin})[role]();
         await privacy();
+        if(role==='vendedor')RaizSeller.privacy(document.getElementById('privacidade'),{user,store:sellerStore,logout:sellerLogout});
         const order = {
           cliente:['catalogo','favoritos','carrinho','pedidos','conta','privacidade'],
-          vendedor:['visao','produtos','pedidos','loja','estatisticas','privacidade'],
+          vendedor:['visao','pedidos','produtos','loja','estatisticas','privacidade'],
           entregador:['disponibilidade','andamento','ofertas','historico','carteira','privacidade'],
           admin:['visao','usuarios','moderacao','pedidos','entregas','solicitacoes','eventos','privacidade']
         }[role] || [];
@@ -665,9 +639,10 @@
           .sort((a,b)=>rank(a.dataset.section)-rank(b.dataset.section))
           .forEach(link=>sectionNav.append(link));
         if(role==='cliente')RaizCustomer.navigation(sectionNav);
+        if(role==='vendedor')RaizSeller.decorateNav(sectionNav);
         mobileNav.replaceChildren(...[...sectionNav.querySelectorAll('a')].map(item => {
           const link = el('a', item.textContent, 'nav-btn');
-          link.href = item.href;
+          link.href = item.getAttribute('href');
           link.dataset.section = item.dataset.section;
           link.onclick = item.onclick;
           return link;
@@ -679,7 +654,8 @@
         }
         feedback.textContent = success;
         if (!duringAction && location.hash) {
-          document.getElementById(location.hash.slice(1))?.scrollIntoView();
+          if(['cliente','vendedor'].includes(role))window.scrollTo({top:0,behavior:'instant'});
+          else document.getElementById(location.hash.slice(1))?.scrollIntoView();
         }
       } catch (error) {
         feedback.textContent = RaizApi.errorText(error);
@@ -689,7 +665,7 @@
       }
     }
     function cancellation(parent,id){
-      if(role==='cliente'){
+      if(['cliente','vendedor'].includes(role)){
         const details=el('details',null,'shop-cancellation');details.append(el('summary','Cancelar este pedido'));parent.append(details);parent=details;
       }
       const [label,reason]=field('Motivo do cancelamento','text');reason.maxLength=300;
@@ -739,6 +715,7 @@
     function syncNavigation() {
       let current = role === 'cliente' && catalogState.favorites && ['#catalogo','#favoritos'].includes(location.hash)
         ? 'favoritos' : location.hash.slice(1) || sectionNav.querySelector('a')?.dataset.section;
+      if(role==='vendedor')current=RaizSeller.show(content,location.hash.slice(1));
       if(role==='cliente'){
         if(!['catalogo','favoritos','carrinho','pedidos','conta','privacidade'].includes(current))current='catalogo';
         RaizCustomer.show(content,current);
@@ -752,13 +729,13 @@
       if (role !== 'cliente') title.textContent = document.getElementById(current)?.querySelector('h2')?.textContent || RaizAccess.labels[role];
     }
     window.addEventListener('hashchange', () => {
-      if(role==='cliente' && !busy)feedback.textContent='';
+      if(['cliente','vendedor'].includes(role) && !busy)feedback.textContent='';
       if(role==='cliente' && ['#catalogo','#favoritos',''].includes(location.hash)){
         const favorites=location.hash==='#favoritos';
         if(catalogState.favorites!==favorites){catalogState.favorites=favorites;pages.catalog=0;load();}
       }
       syncNavigation();
-      if(role==='cliente')window.scrollTo({top:0,behavior:'instant'});
+      if(['cliente','vendedor'].includes(role))window.scrollTo({top:0,behavior:'instant'});
     });
     window.addEventListener('unhandledrejection',()=>{void RaizApi.event(db,'erro',role);});
     window.addEventListener('error',()=>{void RaizApi.event(db,'erro',role);});

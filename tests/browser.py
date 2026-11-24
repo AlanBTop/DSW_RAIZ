@@ -68,6 +68,7 @@ try:
                     # O RLS é coberto pela suíte SQL; aqui verificamos bloqueio de tela.
                     page.goto(base+'vendedor/');expect(page.get_by_role('alert')).to_contain_text('Sua conta tem acesso ao perfil Cliente')
                 if role=='vendedor':
+                    page.locator('.bottom-nav a[href="#produtos"]').click()
                     page.get_by_label('Buscar produto no estoque').fill('Cacto fora dos cem');page.locator('#produtos').get_by_role('button',name='Buscar',exact=True).click();expect(page.locator('#produtos')).to_contain_text('1 resultado(s)')
                 c.close()
             c=context(browser,'cliente');page=c.new_page();page.goto(base+'recuperar-senha.html');expect(page.locator('#recoveryUpdate')).to_be_visible();page.locator('#newPassword').fill('NovaSenhaSegura123!');page.locator('#confirmPassword').fill('NovaSenhaSegura123!');page.get_by_role('button',name='Salvar nova senha').click();expect(page.locator('#recoveryMessage')).to_contain_text('Senha atualizada');c.close()

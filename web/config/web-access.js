@@ -2,20 +2,21 @@
   const accessScript = document.currentScript.src;
   const demoRoles = ['cliente', 'vendedor', 'entregador', 'admin'];
   const labels = { cliente: 'Cliente', vendedor: 'Vendedor', entregador: 'Entregador', admin: 'Administrador' };
-  const destinations = new Set(['catalogo','favoritos','carrinho','pedidos','conta','privacidade']);
+  const destinations = {cliente:new Set(['catalogo','favoritos','carrinho','pedidos','conta','privacidade']),vendedor:new Set(['visao','produtos','pedidos','loja','estatisticas','privacidade'])};
+  const allowedDestination = (role,section) => destinations[role]?.has(section) === true;
   const destinationKey = 'raiz_auth_destination_v1';
   function rememberDestination(role) {
     const section = new URLSearchParams(location.search).get('destino');
-    if (role === 'cliente' && destinations.has(section)) {
+    if (allowedDestination(role,section)) {
       try { sessionStorage.setItem(destinationKey, JSON.stringify({role,section})); } catch (_) {}
     }
   }
   function destination(role) {
     const query = new URLSearchParams(location.search).get('destino');
-    if (role === 'cliente' && destinations.has(query)) return query;
+    if (allowedDestination(role,query)) return query;
     try {
       const saved = JSON.parse(sessionStorage.getItem(destinationKey));
-      if (saved?.role === role && destinations.has(saved.section)) return saved.section;
+      if (saved?.role === role && allowedDestination(role,saved.section)) return saved.section;
     } catch (_) {}
     return '';
   }
@@ -25,7 +26,7 @@
   };
   const login = role => {
     const section = location.hash.slice(1);
-    return '../login.html?role=' + role + '&modo=online' + (role === 'cliente' && destinations.has(section) ? '&destino=' + section : '');
+    return '../login.html?role=' + role + '&modo=online' + (allowedDestination(role,section) ? '&destino=' + section : '');
   };
 
   function client() {
