@@ -41,7 +41,7 @@
       const { data: role } = await db.rpc('raiz_acesso');
       if (!['cliente','vendedor','entregador','admin'].includes(role)) return;
       const account = document.getElementById('storeAccount');
-      if (account) { account.textContent = 'Minha conta'; account.href = url(role + '/index.html?modo=online'); }
+      if (account) { account.textContent = 'Minha conta'; account.href = url(role + '/index.html?modo=online' + (role === 'cliente' ? '#conta' : '')); }
     } catch (_) { /* O catálogo público continua disponível sem sessão. */ }
   }
   window.RaizShell = { mount, updateCart };

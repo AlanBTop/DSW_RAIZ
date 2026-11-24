@@ -2,8 +2,31 @@
   const accessScript = document.currentScript.src;
   const demoRoles = ['cliente', 'vendedor', 'entregador', 'admin'];
   const labels = { cliente: 'Cliente', vendedor: 'Vendedor', entregador: 'Entregador', admin: 'Administrador' };
-  const file = role => role + '/index.html?modo=online' + (role === 'cliente' && window.RaizShopping?.intent() ? '#carrinho' : '');
-  const login = role => '../login.html?role=' + role + '&modo=online';
+  const destinations = new Set(['catalogo','favoritos','carrinho','pedidos','conta','privacidade']);
+  const destinationKey = 'raiz_auth_destination_v1';
+  function rememberDestination(role) {
+    const section = new URLSearchParams(location.search).get('destino');
+    if (role === 'cliente' && destinations.has(section)) {
+      try { sessionStorage.setItem(destinationKey, JSON.stringify({role,section})); } catch (_) {}
+    }
+  }
+  function destination(role) {
+    const query = new URLSearchParams(location.search).get('destino');
+    if (role === 'cliente' && destinations.has(query)) return query;
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(destinationKey));
+      if (saved?.role === role && destinations.has(saved.section)) return saved.section;
+    } catch (_) {}
+    return '';
+  }
+  const file = role => {
+    const section = role === 'cliente' && window.RaizShopping?.intent() ? 'carrinho' : destination(role);
+    return role + '/index.html?modo=online' + (section ? '#' + section : '');
+  };
+  const login = role => {
+    const section = location.hash.slice(1);
+    return '../login.html?role=' + role + '&modo=online' + (role === 'cliente' && destinations.has(section) ? '&destino=' + section : '');
+  };
 
   function client() {
     if (location.protocol === 'file:') throw new Error('Inicie o site pelo INICIAR_PROJETO.bat e acesse http://localhost:3000/.');
@@ -95,7 +118,9 @@
         return;
       }
       if (active.role === requestedRole) {
-        location.replace(file(active.role));
+        const target = file(active.role);
+        try { sessionStorage.removeItem(destinationKey); } catch (_) {}
+        location.replace(target);
         return;
       }
       message('Sua conta tem acesso ao perfil ' + labels[active.role] + '.').append(
@@ -179,5 +204,5 @@
     document.body.classList.remove('raiz-pending');
   }
 
-  window.RaizAccess = { demoRoles, labels, client, callback, authError, message, restoreLogin, open };
+  window.RaizAccess = { demoRoles, labels, client, callback, authError, message, restoreLogin, rememberDestination, open };
 })();

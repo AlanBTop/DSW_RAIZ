@@ -24,6 +24,7 @@
       }
 
       if (urlParams.has("cadastro") && currentRole !== "admin") toggleAuthMode();
+      RaizAccess.rememberDestination(currentRole);
       if (window.RaizShopping?.intent()) RaizAccess.message('Entre ou crie sua conta para continuar a compra. Sua seleção está salva neste navegador para revisão.');
       RaizAccess.restoreLogin(currentRole);
       RaizDB.ready.then(() => {

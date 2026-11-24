@@ -10,6 +10,8 @@ A área do cliente segue uma experiência de marketplace, com telas independente
 
 `tests/design_consistency.py` compara medidas reais do cabeçalho em 14 páginas e quatro larguras. `tests/customer_marketplace.py` exercita ordenação, categorias, favoritos, carrinho e navegação entre telas, com capturas de catálogo, produto, carrinho, pedidos e conta em 1440, 390 e 320 pixels. Os testes usam API isolada e não utilizam contas ou pedidos reais.
 
+O perfil em `#conta` apresenta identificação, dados pessoais, endereço e acesso em cartões separados, com navegação lateral no desktop. A identidade vem da sessão verificada mesmo antes de existir um cadastro de entrega. O endereço usa a operação existente; os dados de acesso não são alterados pela apresentação do perfil. O retorno do login preserva uma seção permitida (`destino=conta`, por exemplo), incluindo o callback Google, sem aceitar URLs externas nem mudar os retornos OAuth cadastrados. `tests/account.py` cobre essa navegação, endereço obrigatório, salvamento, saída e perfil sem endereço em 320, 390 e 1440 pixels com fixtures.
+
 A fonte de publicação é `web/`. O build `python scripts/build_render.py` copia essa fonte para `dist/`, gera apenas a configuração pública de produção e registra os hashes em `dist/release.json`. O Render acompanha `main` de AlanBTop/DSW_RAIZ, executa esse build e publica `dist/`.
 
 A cópia `../RAIZOTIMIZADO/web/` usa os mesmos HTML, CSS, JavaScript, imagens e SDK. O arquivo `config/environment.js` mantém os exemplos habilitados apenas em loopback; `config/local-client.js` e o servidor Python são exclusivos da execução autenticada local. No Render, os quatro perfis exigem login e parâmetros de demonstração não liberam acesso.

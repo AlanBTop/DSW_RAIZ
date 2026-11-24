@@ -57,11 +57,57 @@
     const greeting=node('span',profile?.nome?'Olá, '+profile.nome.split(' ')[0]:'Sua loja de plantas','shop-greeting');
     bar.replaceChildren(address,greeting);
   }
+  function profile({section, user, customer, name, addressLabel, saveAddress, navigation, notice, map}) {
+    section.classList.add('customer-account');
+    const heading=section.querySelector('h2');
+    const title=node('h1','Minha conta');title.id=heading.id;heading.replaceWith(title);
+    const head=node('div',null,'account-page-heading');
+    head.append(title,node('p','Seus dados e endereços, do seu jeito.'));
+    const layout=node('div',null,'account-layout');
+    const aside=node('aside',null,'account-sidebar');aside.setAttribute('aria-label','Menu da minha conta');
+    const summary=node('div',null,'account-summary');
+    const avatar=node('span',name.slice(0,1).toLocaleUpperCase('pt-BR'),'account-avatar');avatar.setAttribute('aria-hidden','true');
+    summary.append(avatar,node('strong',name),node('span','Conta conectada','account-connected'));
+    const menu=node('nav',null,'account-menu');menu.setAttribute('aria-label','Seções da minha conta');
+    for(const [target,label,symbol] of [['account-details','Dados pessoais','user'],['account-delivery','Endereço de entrega','pin'],['account-security','Acesso e segurança','shield']]) {
+      const control=node('button',null,'account-menu-item');control.type='button';control.append(icon(symbol),node('span',label));
+      if(target==='account-details')control.classList.add('active');
+      control.onclick=()=>{menu.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b===control));document.getElementById(target).scrollIntoView({behavior:'smooth',block:'start'});};menu.append(control);
+    }
+    const shortcuts=node('div',null,'account-shortcuts');shortcuts.append(node('span','SUAS COMPRAS','account-menu-label'));
+    for(const [target,label,symbol] of [['pedidos','Meus pedidos','box'],['favoritos','Meus favoritos','heart'],['privacidade','Privacidade e termos','shield']]) {
+      const link=node('a',null,'account-menu-item');link.href='#'+target;link.append(icon(symbol),node('span',label));shortcuts.append(link);
+    }
+    aside.append(summary,menu,shortcuts);
+    const panels=node('div',null,'account-panels');
+    function panel(id,title,symbol,description) {
+      const card=node('div',null,'account-panel');card.id=id;
+      const header=node('div',null,'account-panel-heading');const copy=node('div');
+      copy.append(node('h2',title),node('p',description));header.append(icon(symbol),copy);card.append(header);panels.append(card);return card;
+    }
+    const details=panel('account-details','Dados pessoais','user','Informações do seu cadastro na RAIZ.');
+    const fields=node('dl',null,'account-data');
+    for(const [label,value] of [['Nome completo',name],['E-mail',user.email||'Não informado'],['Telefone',customer?.telefone||user.user_metadata?.telefone||'Não informado']]) {
+      const row=node('div');row.append(node('dt',label),node('dd',value));fields.append(row);
+    }
+    details.append(fields);
+    const delivery=panel('account-delivery','Endereço de entrega','pin','Mantenha seu endereço atualizado para receber suas compras.');
+    if(notice)delivery.append(node('p',notice,'raiz-notice'));
+    delivery.append(addressLabel);
+    const addressActions=node('div',null,'account-address-actions');addressActions.append(saveAddress);if(map)addressActions.append(map);delivery.append(addressActions);
+    const security=panel('account-security','Acesso e segurança','shield','Gerencie o acesso à sua conta com tranquilidade.');
+    const methods=user.app_metadata?.providers||[user.app_metadata?.provider];
+    const names=[...new Set(methods.map(p=>({google:'Google',email:'E-mail e senha'})[p]).filter(Boolean))];
+    const session=node('div',null,'account-session');const sessionCopy=node('div');sessionCopy.append(node('strong',names.join(' e ')||'Conta RAIZ'),node('p',user.email||'Sua sessão está ativa.'));session.append(sessionCopy,node('span','Conectado','account-session-badge'));security.append(session);
+    const recovery=node('a','Recuperar acesso por e-mail','account-recovery');recovery.href='../recuperar-senha.html';security.append(recovery);
+    navigation.className='account-session-actions';navigation.firstChild.textContent='Atualizar dados';navigation.lastChild.textContent='Sair da conta';security.append(navigation);
+    layout.append(aside,panels);section.replaceChildren(head,layout);
+  }
   function show(content, current) {
     const selected=current==='favoritos'?'catalogo':current;
     for(const section of content.children) if(section.tagName==='SECTION')section.hidden=section.id!==selected;
     const active=content.querySelector('#'+selected);
     if(active) document.title=(current==='favoritos'?'Favoritos':active.querySelector('h1,h2')?.textContent||'Marketplace')+' · RAIZ';
   }
-  window.RaizCustomer={node,icon,art,intro,navigation,servicebar,show,labels};
+  window.RaizCustomer={node,icon,art,intro,navigation,servicebar,profile,show,labels};
 })();

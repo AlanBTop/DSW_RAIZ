@@ -318,8 +318,9 @@
           location.hash='conta';
         }
       }
-      setIdentity(profile[0]?.nome);
-      RaizCustomer.servicebar(main,profile[0]);
+      const identityName=profile[0]?.nome || user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Cliente';
+      setIdentity(identityName);
+      RaizCustomer.servicebar(main,{...profile[0],nome:identityName});
       RaizShell.updateCart(cart.reduce((sum, item) => sum + item.quantidade, 0));
       if (role === 'cliente') title.textContent = profile[0]?.nome ? 'Olá, ' + profile[0].nome + '.' : 'Minha conta';
       items.push(...await RaizApi.related(db,'cliente_itens_pedido','id,pedido_id,produto_nome,quantidade,preco_unitario','pedido_id',orders.map(o=>o.id)));
@@ -470,13 +471,16 @@
         }
         return row;
       },'Você ainda não tem pedidos.');
-      const address = section('Minha conta e endereço', 'conta', 'Perfil');
-      if (profile.length) address.append(el('p',[profile[0].nome,profile[0].telefone].filter(Boolean).join(' · ')));
-      if (profile[0]?.endereco && RaizMaps.search(profile[0].endereco)) address.append(mapLink(RaizMaps.search(profile[0].endereco),'Ver endereço no Google Maps'));
+      const address = section('Minha conta', 'conta', 'Minha conta');
       const [addressLabel, addressInput] = field('Endereço completo','text',profile[0]?.endereco);
-      if (!profile.length) address.append(el('p',shoppingNotice || 'Salve seu endereço para liberar favoritos, carrinho e pedidos.'));
-      address.append(addressLabel, action('Salvar endereço', () => rpc('endereco',{p_endereco:addressInput.value})));
-      navigation.className='shop-account-actions';address.append(navigation);
+      addressInput.placeholder='Rua, número, bairro, cidade, estado e CEP';addressInput.required=true;addressInput.minLength=5;addressInput.maxLength=300;
+      const saveAddress=action('Salvar endereço',()=>{
+        if(!addressInput.reportValidity())throw {code:'P0001',message:'Informe um endereço completo com pelo menos 5 caracteres.'};
+        return rpc('endereco',{p_endereco:addressInput.value.trim()});
+      },'Endereço de entrega salvo.');
+      RaizCustomer.profile({section:address,user,customer:profile[0],name:identityName,addressLabel,saveAddress,navigation,
+        notice:!profile.length?(shoppingNotice||'Complete seu endereço de entrega para começar a comprar.'):'',
+        map:profile[0]?.endereco && RaizMaps.search(profile[0].endereco)?mapLink(RaizMaps.search(profile[0].endereco),'Ver no mapa'):null});
     }
 
     function productForm(p = {}) {
