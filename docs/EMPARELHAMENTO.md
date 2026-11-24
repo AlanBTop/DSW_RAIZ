@@ -16,6 +16,10 @@ A central do vendedor em `vendedor/console.js` e `console.css` separa visão ger
 
 `tests/seller_console.py` verifica cadastro/edição/pausa de plantas, filtros, preparo, navegação e contadores com mais de doze produtos em 1440, 390 e 320 pixels. `tests/partners_local.py` cobre as operações com PostgreSQL temporário e acompanha um produto/pedido pelo vendedor, cliente, entregador e administrador, sem gravar no Supabase remoto.
 
+A central do entregador em `entregador/console.js` e `console.css` segue a identidade da central do vendedor, com telas independentes de visão geral, entregas em andamento, oportunidades, histórico, carteira e perfil/privacidade. O celular mostra cinco atalhos fixos; o perfil permanece no cabeçalho. Endereços e rotas são exibidos nas entregas aceitas, usando os dados retornados pelo contrato existente. Coleta exige as duas conferências e conclusão exige confirmar o recebimento. O histórico filtra a situação na consulta paginada; os indicadores usam os valores do perfil e a contagem da consulta. Não são estimadas distâncias, prazos ou ganhos ausentes no banco.
+
+`tests/courier_console.py` cobre aceite/coleta/conclusão, rejeição de aceite, filtros, paginação, disponibilidade, ausência de vínculo, navegação e compatibilidade com a base sem `raiz_recursos` em 1440, 390 e 320 pixels. A API de fixture é isolada. `tests/partners_local.py` verifica o fluxo com PostgreSQL temporário; nenhuma dessas verificações escreve no Supabase remoto.
+
 A fonte de publicação é `web/`. O build `python scripts/build_render.py` copia essa fonte para `dist/`, gera apenas a configuração pública de produção e registra os hashes em `dist/release.json`. O Render acompanha `main` de AlanBTop/DSW_RAIZ, executa esse build e publica `dist/`.
 
 A cópia `../RAIZOTIMIZADO/web/` usa os mesmos HTML, CSS, JavaScript, imagens e SDK. O arquivo `config/environment.js` mantém os exemplos habilitados apenas em loopback; `config/local-client.js` e o servidor Python são exclusivos da execução autenticada local. No Render, os quatro perfis exigem login e parâmetros de demonstração não liberam acesso.

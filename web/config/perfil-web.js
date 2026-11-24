@@ -100,7 +100,7 @@
     const workspace = el('main', null, 'main');
     const header = el('header', null, role === 'cliente' ? 'customer-toolbar' : 'topbar');
     const headerCopy = el('div');
-    const title = el(role==='vendedor'?'h1':'h2', RaizAccess.labels[role]);
+    const title = el(['vendedor','entregador'].includes(role)?'h1':'h2', RaizAccess.labels[role]);
     const subtitles = {cliente:'RAIZ · Marketplace de Plantas',vendedor:'RAIZ · Área do vendedor',entregador:'RAIZ · Logística Botânica',admin:'RAIZ · Governança'};
     const subtitle = el('div', subtitles[role] + ' · ' + (RaizDB.backendLabel || 'Supabase'), 'tiny muted');
     headerCopy.append(title, subtitle);
@@ -118,7 +118,7 @@
       admin: ['Um ecossistema em crescimento', 'Cuidar de cada detalhe.', 'Acompanhe a operação, os parceiros e o catálogo em um só lugar.']
     };
     function welcome() {
-      if (['cliente','vendedor'].includes(role)) return;
+      if (['cliente','vendedor','entregador'].includes(role)) return;
       if (!partnerCopy[role]) return;
       const [eyebrow, headline, description] = partnerCopy[role];
       const hero = el('section', null, 'partner-hero');
@@ -156,7 +156,8 @@
       } : {})
     });
     if (role === 'cliente') navigation.firstChild.remove();
-    let sellerLogout, sellerStore;
+    let sellerLogout, sellerStore, courierLogout, courierProfile;
+    if(role==='entregador')courierLogout=RaizCourier.configure({main,sidebar,navigation});
     if(role==='vendedor'){
       sellerLogout=navigation.lastChild;sellerLogout.remove();
       navigation.firstChild.textContent='Ver marketplace';
@@ -171,6 +172,7 @@
 
     const pages = {}, totals = {};
     const sellerState={search:'',category:'',availability:'',status:''};
+    const courierState={history:''};
     const paged = {
       cliente_produtos:'moderacao',
       vendedor_produtos:'produtos',vendedor_pedidos:'pedidos',cliente_pedidos:'pedidos',
@@ -184,6 +186,7 @@
           ...(sellerState.availability==='sem-estoque'?{stock:0}:{})}:{}),
         ...(view==='vendedor_pedidos' && sellerState.status?{status:sellerState.status}:{}),
         ...(view==='entregador_corridas' && role==='entregador'?{status:'Em andamento'}:{}),
+        ...(view==='entregador_historico' && role==='entregador' && courierState.history?{status:courierState.history}:{}),
         ascending:!view.includes('pedidos') && view!=='entregador_historico'});
       totals[view]=result.total;return result.rows;
     };
@@ -532,51 +535,20 @@
     }
 
     async function courier() {
-      const [profiles, offers, trips, history, wallet] = await Promise.all([
-        query('entregador_perfil','nome,veiculo,online,saldo_carteira,ganhos_hoje,total_corridas_hoje'),features.versao>=4?rpc('ofertas_pagina',{p_pagina:pages.ofertas||0}):rpc('ofertas'),
+      const profiles=await query('entregador_perfil','nome,veiculo,online,saldo_carteira,ganhos_hoje,total_corridas_hoje');
+      const [offers, trips, history, wallet] = profiles.length ? await Promise.all([
+        features.versao>=4?rpc('ofertas_pagina',{p_pagina:pages.ofertas||0}):rpc('ofertas'),
         query('entregador_corridas','id,status,etapa_atual,coleta_loja,coleta_endereco,entrega_endereco,item_descricao,fragil,valor'),
         query('entregador_historico','corrida_id,status,data_formatada'),
         query('entregador_extrato','id,tipo,descricao,valor,status,data_formatada')
-      ]);
-      const account = section('Disponibilidade', 'disponibilidade', 'Início');
-      const profile = profiles[0];
+      ]) : [features.versao>=4?{itens:[],total:0}:[],[],[],[]];
+      const profile=profiles[0];
       setIdentity(profile?.nome);
-      if (!profile) {
-        account.append(el('p','A equipe responsável precisa vincular seu perfil de entregador.'));
-        return;
-      }
-      account.append(el('span',profile.online ? 'Online' : 'Offline','raiz-status ' + (profile.online ? 'raiz-positive' : '')),
-        el('p',[profile.nome,profile.veiculo].filter(Boolean).join(' · ')),
-        action(profile.online ? 'Ficar offline' : 'Ficar online', () => rpc('disponibilidade',{p_online:!profile.online})));
-      const walletSection = section('Carteira', 'carteira');
-      metrics(walletSection,[['Saldo registrado',money.format(profile.saldo_carteira||0)],['Ganhos de hoje',money.format(profile.ganhos_hoje||0)],['Entregas de hoje',String(profile.total_corridas_hoje||0)]]);
-      list(walletSection,wallet,row=>card(row.descricao,el('p',money.format(row.valor)+' · '+row.status+' · '+row.data_formatada)),'Nenhum lançamento na carteira.');
-      const step = (p_pedido,p_etapa,p_vaso=false,p_folhagem=false,p_entrega=false) => rpc('etapa',{p_pedido,p_etapa,p_vaso,p_folhagem,p_entrega});
-      list(section('Entregas em andamento', 'andamento', 'Entregas'),trips.filter(t => t.status === 'Em andamento'),t => {
-        const row = card('#' + t.id + ' · ' + t.item_descricao,
-          el('span',t.etapa_atual === 1 ? 'Próximo passo: coleta' : 'Próximo passo: entrega','raiz-status raiz-positive'),
-          el('p','Coleta · ' + t.coleta_loja + ' · ' + t.coleta_endereco, 'raiz-route-stop'),
-          el('p','Destino · ' + t.entrega_endereco,'raiz-route-stop'),el('p',t.fragil ? 'Carga frágil. Mantenha o vaso em pé.' : 'Carga sem indicação de fragilidade.',t.fragil ? 'raiz-notice' : 'raiz-muted'));
-        if(RaizMaps.route('',t.etapa_atual===1?t.coleta_endereco:t.entrega_endereco)) {
-          row.append(mapLink(RaizMaps.route('',t.etapa_atual===1?t.coleta_endereco:t.entrega_endereco),t.etapa_atual===1?'Ir até a coleta no Google Maps':'Ir até a entrega no Google Maps'));
-          if(RaizMaps.route(t.coleta_endereco,t.entrega_endereco)) row.append(mapLink(RaizMaps.route(t.coleta_endereco,t.entrega_endereco),'Ver rota completa no Google Maps'));
-        }
-        if (t.etapa_atual === 1) {
-          const [potLabel,pot] = field('Embalagem ou vaso protegido','checkbox');
-          const [leavesLabel,leaves] = field('Produto e folhagem conferidos','checkbox');
-          row.append(potLabel,leavesLabel,action('Confirmar coleta', () => step(t.id,2,pot.checked,leaves.checked)));
-        }
-        if (t.etapa_atual === 2) {
-          const [label,delivered] = field('Entrega recebida no destino','checkbox');
-          row.append(label,action('Concluir entrega', () => step(t.id,3,false,false,delivered.checked)));
-        }
-        return row;
-      },'Nenhuma entrega em andamento.');
-      if(features.versao>=4) totals.ofertas=offers.total;
-      list(section('Entregas disponíveis', 'ofertas', 'Oportunidades'),features.versao>=4?offers.itens:offers,o => card('#' + o.id + ' · ' + o.coleta_loja,
-        el('p',o.item_descricao + (o.fragil ? ' · Frágil' : '') + ' · ' + money.format(o.valor)),
-        action('Aceitar entrega', () => step(o.id,1))),profile.online ? 'Nenhuma entrega disponível.' : 'Fique online para consultar as ofertas.');
-      list(section('Histórico', 'historico'),history,t => card('#' + t.corrida_id + ' · ' + t.status,el('p',t.data_formatada)),'Nenhuma entrega concluída.');
+      if(features.versao>=4)totals.ofertas=offers.total;
+      RaizCourier.render({profile,offers:features.versao>=4?offers.itens:offers,
+        trips:trips.filter(t=>t.status==='Em andamento'),history,wallet,totals,state:courierState,
+        section,action,field,rpc,reload:key=>{pages[key]=0;load();},onAccepted:()=>{pages.ofertas=0;},onProfile:value=>{courierProfile=value;}});
+
     }
 
     let adminSearch='';
@@ -620,13 +592,14 @@
     async function load(success = '', duringAction = false) {
       if (busy && !duringAction) return;
       busy = true;
-      feedback.textContent = ['cliente','vendedor'].includes(role)?'Carregando…':'Carregando dados de ' + (RaizDB.backendLabel || 'Supabase') + '…';
+      feedback.textContent = ['cliente','vendedor','entregador'].includes(role)?'Carregando…':'Carregando dados de ' + (RaizDB.backendLabel || 'Supabase') + '…';
       try {
         content.replaceChildren();
         sectionNav.replaceChildren();
         welcome();
         await ({cliente:customer,vendedor:seller,entregador:courier,admin})[role]();
         await privacy();
+        if(role==='entregador')RaizCourier.privacy(document.getElementById('privacidade'),{user,profile:courierProfile,logout:courierLogout});
         if(role==='vendedor')RaizSeller.privacy(document.getElementById('privacidade'),{user,store:sellerStore,logout:sellerLogout});
         const order = {
           cliente:['catalogo','favoritos','carrinho','pedidos','conta','privacidade'],
@@ -640,6 +613,7 @@
           .forEach(link=>sectionNav.append(link));
         if(role==='cliente')RaizCustomer.navigation(sectionNav);
         if(role==='vendedor')RaizSeller.decorateNav(sectionNav);
+        if(role==='entregador')RaizCourier.decorateNav(sectionNav);
         mobileNav.replaceChildren(...[...sectionNav.querySelectorAll('a')].map(item => {
           const link = el('a', item.textContent, 'nav-btn');
           link.href = item.getAttribute('href');
@@ -647,6 +621,7 @@
           link.onclick = item.onclick;
           return link;
         }));
+        if(role==='entregador')RaizCourier.decorateNav(mobileNav);
         syncNavigation();
         for(const [view,total] of Object.entries(totals)){
           const id=paged[view] || (view==='ofertas'?'ofertas':view==='usuarios'?'usuarios':null);
@@ -654,7 +629,7 @@
         }
         feedback.textContent = success;
         if (!duringAction && location.hash) {
-          if(['cliente','vendedor'].includes(role))window.scrollTo({top:0,behavior:'instant'});
+          if(['cliente','vendedor','entregador'].includes(role))window.scrollTo({top:0,behavior:'instant'});
           else document.getElementById(location.hash.slice(1))?.scrollIntoView();
         }
       } catch (error) {
@@ -716,6 +691,7 @@
       let current = role === 'cliente' && catalogState.favorites && ['#catalogo','#favoritos'].includes(location.hash)
         ? 'favoritos' : location.hash.slice(1) || sectionNav.querySelector('a')?.dataset.section;
       if(role==='vendedor')current=RaizSeller.show(content,location.hash.slice(1));
+      if(role==='entregador')current=RaizCourier.show(content,location.hash.slice(1));
       if(role==='cliente'){
         if(!['catalogo','favoritos','carrinho','pedidos','conta','privacidade'].includes(current))current='catalogo';
         RaizCustomer.show(content,current);
@@ -729,13 +705,13 @@
       if (role !== 'cliente') title.textContent = document.getElementById(current)?.querySelector('h2')?.textContent || RaizAccess.labels[role];
     }
     window.addEventListener('hashchange', () => {
-      if(['cliente','vendedor'].includes(role) && !busy)feedback.textContent='';
+      if(['cliente','vendedor','entregador'].includes(role) && !busy)feedback.textContent='';
       if(role==='cliente' && ['#catalogo','#favoritos',''].includes(location.hash)){
         const favorites=location.hash==='#favoritos';
         if(catalogState.favorites!==favorites){catalogState.favorites=favorites;pages.catalog=0;load();}
       }
       syncNavigation();
-      if(['cliente','vendedor'].includes(role))window.scrollTo({top:0,behavior:'instant'});
+      if(['cliente','vendedor','entregador'].includes(role))window.scrollTo({top:0,behavior:'instant'});
     });
     window.addEventListener('unhandledrejection',()=>{void RaizApi.event(db,'erro',role);});
     window.addEventListener('error',()=>{void RaizApi.event(db,'erro',role);});

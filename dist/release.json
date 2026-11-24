@@ -1,5 +1,5 @@
 {
-  "release": "5197c8c92b7e2fc6ba464e955f54cb5f7842c9012471ddf5f645a31906c045ac",
+  "release": "cf13a8a2ea9f04a94ef3b5e4637a0ef9a229e0c11227080d369f1f490dd72542",
   "files": {
     "404.html": "6fbcfb502648d3830d0512a011291d2c0886b6e5ca73da00107723b7fae7ac9a",
     "_headers": "9b92a18d7770aca0f0b1375fb30600c3e60ab2c30d45bb47bb99630fc696b242",
@@ -37,7 +37,7 @@
     "config/partner-design.js": "196fa74c9f03c25c92e84e249e7114b7b77de73a186101083f7b58ec5b07ce8e",
     "config/payment-flow.js": "5e9f8dbd3c06e948bd6eb1ab3dc6da1f48f348256747ab3e95a91aecf639af4d",
     "config/payments.js": "a98dc06cf0001537d322487c5dfa3ad3e9c3b803d2aaaa385e67e6dbd112c35b",
-    "config/perfil-web.js": "96c72a4f410a556254c3b77727760d56592b5b58ed9f017ecdc729daca0a5741",
+    "config/perfil-web.js": "1717ca835914088977cdc1ea73afa9591233b10ea89316531875d41539f23000",
     "config/presentation-data.js": "fdcd8576f87c8e800a1582ea4e817286c96c90eac3b66b02d9cb5c3ad86d2ec4",
     "config/raiz-web.css": "98338d92f5f8cfb8406b8383279ca61bf54fe64cd6ebe30cf590f14ea1a5ff44",
     "config/recovery.js": "b53f67b3e794298a12657d56f9e709989afcdb3fafeaa2629626ed00fa20540f",
@@ -54,7 +54,9 @@
     "config/vitrine.js": "014151629bd480f144a2b5df9cd1a7698776bc92d0cb965e38374d41c2b3c34c",
     "config/web-access.js": "5e5b363e6e3e221f5ec1eee1cb9820d60597022a8b250de99c9ce90c439e0f20",
     "entregador/app.js": "0e4a62808c5283b5d50e57a31b82991bba750213c828fd62773808e91e29c51d",
-    "entregador/index.html": "7eb5641173da82a97980542407c5ab7a74e79976d59a57a4ec290393528a9215",
+    "entregador/console.css": "11bcb934de9a17afab1c5cf4d8c8acaaef52e167be4a99e1d0dc7d32ce8e267d",
+    "entregador/console.js": "8123df04a1bdc6125d4fd8fd9948633f9acc6dd428d7985b60fe5e9583935c71",
+    "entregador/index.html": "53d779f088f1d6f92c0dfdcdd338b85abf42c6fbfa053a56d6e08b5f905be377",
     "entregador/manifest.json": "56743bcc13f92819405184cca02b5d3ca2e7fd5ab51fd7104e7315ddf0ecf3d7",
     "entregador/style.css": "8ea40142a5dfe7399a18626e5ce066acad5859b2a95f03dc4a501cd4c115fd25",
     "entregador/sw.js": "2dcd63f3c8aa70ea0f8f25589da62ba8a8e17557e053ac5945febe558f128632",
