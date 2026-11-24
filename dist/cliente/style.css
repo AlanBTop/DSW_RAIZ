@@ -215,7 +215,7 @@ textarea.input { min-height: 105px; resize: vertical; }
 .top-actions { display: flex; align-items: center; gap: 10px; }
 .app-content { padding: 28px; max-width: 1320px; margin: auto; }
 .page-title { display: flex; align-items: end; justify-content: space-between; gap: 18px; margin-bottom: 22px; }
-.page-title h1 { font-size: 2rem; letter-spacing: -.03em; margin: 0; color: var(--ever); }
+.page-title h1 { font-size: 2rem; letter-spacing: normal; margin: 0; color: var(--ever); }
 .page-title p { margin: 5px 0 0; color: var(--muted); }
 .searchbar {
   display: flex;
@@ -240,7 +240,7 @@ textarea.input { min-height: 105px; resize: vertical; }
   overflow: hidden;
   min-height: 200px;
 }
-.hero-card h2 { font-size: 2.2rem; line-height: 1.05; letter-spacing: -.03em; margin: 0 0 10px; color: var(--ever); max-width: 560px; }
+.hero-card h2 { font-size: 2.2rem; line-height: 1.05; letter-spacing: normal; margin: 0 0 10px; color: var(--ever); max-width: 560px; }
 .hero-card p { color: var(--muted); max-width: 590px; }
 .hero-card .plant { position: absolute; right: 5%; bottom: -8px; font-size: 8rem; user-select: none; }
 

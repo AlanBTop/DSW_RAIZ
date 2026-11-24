@@ -14,14 +14,14 @@
 .courier-console .nav-btn svg{width:20px;height:20px;flex-shrink:0}.courier-console .sidebar .nav-btn.active{background:#e8f0df}
 .courier-console .sidebar-foot .hub-tag{display:none}.courier-console .sidebar-about{font-size:14px}
 .courier-console .topbar{position:static;min-height:100px;padding:22px 30px;gap:20px}
-.courier-console .topbar h1{font:650 25px/1.25 var(--raiz-font);margin:0;letter-spacing:-.6px}
+.courier-console .topbar h1{font:650 25px/1.25 var(--raiz-font);margin:0;letter-spacing:normal}
 .courier-console .topbar .tiny{font-size:13px;margin-top:7px;color:#65765c}
 .courier-console .top-actions{gap:10px}.courier-console .top-actions .raiz-button{margin:0;min-height:44px;font-size:14px;text-align:center;background:white;color:#48643c;border:1px solid #d6e0ce}
 .courier-console .top-actions a{background:#1b4332;color:white;border-color:#1b4332}
 .courier-console .raiz-app-content{padding:28px 30px 54px}.courier-console .raiz-content{display:block}
 .courier-console .raiz-content>section{margin:0;padding:0;background:transparent;border:0;border-radius:0}
 .courier-console .raiz-content>section[hidden]{display:none!important}
-.courier-console .raiz-content>section>h2{font-size:22px;letter-spacing:-.4px;font-weight:650;margin:0 0 9px}
+.courier-console .raiz-content>section>h2{font-size:22px;letter-spacing:normal;font-weight:650;margin:0 0 9px}
 .courier-console .courier-lead{font-size:16px;color:#65765c;line-height:1.7;margin:0 0 24px}
 .courier-console .raiz-feedback:empty{display:none}.courier-console .raiz-feedback:not(:empty){margin:0 0 20px;padding:14px 18px;border:1px solid #ccdcbc;background:#eaf3e2;border-radius:8px;font-size:14px}
 .courier-console .courier-panel{background:#fff;border:1px solid #dce5d3;border-radius:12px;padding:24px;min-width:0;margin:0 0 22px;box-shadow:none}
@@ -30,7 +30,7 @@
 .courier-console .courier-panel .raiz-button{font-size:14px;min-height:44px;margin:10px 0 0;text-align:center;line-height:1.5}
 .courier-console .courier-secondary{background:#fff;color:#365b30;border:1px solid #bacdad}
 .courier-console .courier-availability{display:flex;justify-content:space-between;align-items:center;gap:24px;background:#eaf1e1;border-color:#d0dfc1;padding:26px}
-.courier-availability>div{max-width:650px}.courier-console .courier-availability h3{margin:14px 0 7px;font-size:23px;letter-spacing:-.3px}.courier-console .courier-availability p{margin:0}
+.courier-availability>div{max-width:650px}.courier-console .courier-availability h3{margin:14px 0 7px;font-size:23px;letter-spacing:normal}.courier-console .courier-availability p{margin:0}
 .courier-console .courier-availability>.raiz-button{flex-shrink:0;margin:0;background:white;color:#365b30;border:1px solid #b9cfa9}
 .courier-console .courier-badge{display:inline-flex;align-items:center;width:fit-content;font-size:13px;font-weight:600;line-height:1.5;background:#f6eedf;color:#815e2a;border-radius:6px;padding:5px 10px;white-space:normal}
 .courier-console .courier-badge.is-positive{color:#365b30;background:#e3efd8}

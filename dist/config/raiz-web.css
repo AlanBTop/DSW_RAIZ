@@ -216,7 +216,7 @@ body.raiz-pending::before {
   font: 400 clamp(2.05rem,4.5vw,3.65rem)/1.03 var(--raiz-display);
   margin: 0;
   color: var(--raiz-dark);
-  letter-spacing: -.025em;
+  letter-spacing: normal;
 }
 
 .raiz-dashboard .raiz-identity {
