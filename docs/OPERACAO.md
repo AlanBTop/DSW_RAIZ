@@ -32,6 +32,8 @@ Antes de processar, a equipe precisa encerrar pedidos/entregas pendentes. O oper
 
 ## Monitoramento e retenção
 
+O perfil público da loja fica em `loja.html?id=<loja_id>`, com abas Produtos e Sobre a loja. O acesso “Ver perfil do vendedor” aparece somente em `produto.html`, sem links novos nos cartões do catálogo. A página consulta apenas anúncios ativos de `cliente_produtos`, filtrados pelo identificador da loja; nome, categorias e contagens vêm desses anúncios públicos. A apresentação não expõe endereço de coleta, documentos ou dados privados do vendedor. Valide esse fluxo com `python tests/shop_profile.py` (Edge/Chrome, desktop e celular).
+
 Eventos em `public.raiz_eventos_operacao`, visíveis só ao admin. Capturam categoria, área, referência, usuário autenticado e horário; sem payload livre. Há cota de 60 eventos/minuto por usuário. A rotina de inserção limpa registros com mais de 30 dias. Configure também tarefa diária `delete from public.raiz_eventos_operacao where created_at < now() - interval '30 days'` no agendador administrativo para cumprir retenção mesmo sem tráfego. Confira falhas de envio e não trate a tabela como prova de auditoria: os eventos são enviados por clientes autenticados e podem ser omitidos ou forjados por eles.
 
 Backup: conferir plano e retenção no Supabase e ensaiar restauração em homologação. Uma restauração deve reaplicar solicitações de exclusão posteriores ao backup antes de voltar ao ar. Nunca publique dados ou sessões de testes.

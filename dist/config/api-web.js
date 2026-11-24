@@ -37,6 +37,7 @@
     if(options.category)rows=rows.filter(r=>r.categoria===options.category);
     if(options.status)rows=rows.filter(r=>r.status===options.status);
     if(options.stock!==undefined)rows=rows.filter(r=>r.estoque===options.stock);
+    if(options.storeId!==undefined)rows=rows.filter(r=>r.loja_id===options.storeId);
     if(options.ids)rows=rows.filter(r=>options.ids.includes(r[options.idColumn || 'id']));
     const term=cleanSearch(options.search).toLocaleLowerCase('pt-BR');
     if(term)rows=rows.filter(r=>(options.searchColumns || ['nome']).some(k=>String(r[k] || '').toLocaleLowerCase('pt-BR').includes(term)));
@@ -54,6 +55,7 @@
     if (options.category) request=request.eq('categoria',options.category);
     if (options.status) request=request.eq('status',options.status);
     if (options.stock!==undefined) request=request.eq('estoque',options.stock);
+    if (options.storeId!==undefined) request=request.eq('loja_id',options.storeId);
     if (options.ids) {
       if (!options.ids.length) return {rows:[],total:0,page:number};
       request=request.in(options.idColumn || 'id',options.ids);

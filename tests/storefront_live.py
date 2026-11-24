@@ -24,6 +24,7 @@ try:
         page.on('response',lambda r:bad.append({'url':r.url.split('?')[0],'status':r.status}) if '.supabase.co/rest/' in r.url and r.status>=400 else None)
         page.goto(base,wait_until='domcontentloaded');expect(page.locator('.store-product').first).to_be_visible(timeout=30000)
         count=page.locator('#storeProducts .store-product').count();assert count>0 and 'login' not in page.url
+        expect(page.locator('a[href*="loja.html"]')).to_have_count(0)
         page.locator('#storeHighlightControls button').last.click();page.wait_for_function('()=>document.getElementById("storeProducts").scrollLeft>2')
         featured=page.locator('#storeProducts');featured.focus();featured.press('Home');page.wait_for_function('()=>document.getElementById("storeProducts").scrollLeft<=2')
         expect(page.locator('#storeRail-plantas .store-product').first).to_be_visible(timeout=30000)
@@ -33,6 +34,15 @@ try:
         product=page.locator('.store-product-name').first.inner_text();page.get_by_role('link',name='Ver produto',exact=True).first.click()
         expect(page.get_by_role('heading',name=product,exact=True)).to_be_visible(timeout=30000)
         assert 'login' not in page.url
+        product_url=page.url
+        page.get_by_role('link',name='Ver perfil do vendedor',exact=True).click()
+        expect(page.locator('.shop-profile-hero h1')).to_be_visible(timeout=30000)
+        expect(page.locator('#shopProducts .store-product').first).to_be_visible(timeout=30000)
+        expect(page.locator('a.buyer-seller-profile')).to_have_count(0)
+        assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1')
+        page.get_by_role('link',name='Sobre a loja',exact=True).click();expect(page.locator('#shop-sobre')).to_be_visible()
+        page.screenshot(path=str(out/('loja-publicada-390.png' if args.url else 'loja-real-390.png')),full_page=True)
+        page.goto(product_url);expect(page.get_by_role('heading',name=product,exact=True)).to_be_visible(timeout=30000)
         page.get_by_role('button',name='Adicionar ao carrinho').click();expect(page.locator('#storeCartCount')).to_have_text('1')
         page.get_by_role('link',name='Carrinho 1').click();expect(page.get_by_role('link',name=product,exact=True)).to_be_visible(timeout=30000)
         page.get_by_role('button',name='Continuar para comprar').click();expect(page.locator('#btnGoogle')).to_be_visible(timeout=30000)
@@ -44,7 +54,7 @@ try:
         assert oauth.status in (302,303)
         destination=urlparse(oauth.headers['location']);assert destination.hostname=='accounts.google.com'
         assert not errors and not bad,{'errors':errors,'bad':bad}
-        result={'url':base,'anonymous_catalog_cards':count,'featured_and_category_carousels':'passed','product_details':'public','guest_cart':'passed','login_only_at_purchase':'passed','google_button':'visible','google_provider':True,'google_authorization_host':destination.hostname,'database_writes':0,'errors':errors}
+        result={'url':base,'anonymous_catalog_cards':count,'featured_and_category_carousels':'passed','product_details':'public','seller_profile_products_and_about':'passed','seller_link_absent_from_catalog':True,'guest_cart':'passed','login_only_at_purchase':'passed','google_button':'visible','google_provider':True,'google_authorization_host':destination.hostname,'database_writes':0,'errors':errors}
         (ROOT/'tests'/('resultado_storefront_publicado.json' if args.url else 'resultado_storefront_real.json')).write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
         print(json.dumps(result,ensure_ascii=True));context.close();browser.close()
 finally:
