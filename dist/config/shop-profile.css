@@ -6,7 +6,7 @@
 .shop-profile-tabs a { padding:12px 0 15px;border-bottom:3px solid transparent;font-size:15px;font-weight:500;text-decoration:none;color:#75836b; }
 .shop-profile-tabs a[aria-current=page] { border-color:#2d6a4f;color:#1b4332;font-weight:650; }
 .shop-profile-heading { display:flex;align-items:end;justify-content:space-between;gap:24px;margin-bottom:20px; }
-.shop-profile-heading h2 { font-size:26px;font-weight:650;letter-spacing:-.5px;margin:0 0 8px; }
+.shop-profile-heading h2 { font-size:26px;font-weight:650;letter-spacing:normal;margin:0 0 8px; }
 .shop-profile-heading p { margin:0; }
 .shop-profile-filters { display:flex;gap:16px; }
 .shop-profile-filters label { display:grid;gap:8px;font-size:13px;color:#6d7e61; }

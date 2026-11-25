@@ -164,6 +164,48 @@ body {
   line-height: 1.5;
 }
 
+.login-recovery-link {
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 44px;
+  margin-left: auto;
+  color: #24553d;
+  font-size: .875rem;
+  font-weight: 650;
+  text-underline-offset: 4px;
+}
+
+.login-recovery-link[hidden] {
+  display: none;
+}
+
+.login-support-links {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin: 20px 0;
+  padding-top: 12px;
+  border-top: 1px solid #dce5de;
+}
+
+.login-support-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 4px 8px;
+  color: #24553d;
+  font-size: .875rem;
+  text-underline-offset: 4px;
+}
+
+.login-support-links a:hover,
+.login-recovery-link:hover {
+  background: #eef5ef;
+  border-radius: 6px;
+}
+
 @media(max-width:680px) {
   .login-photo {
     display: none;

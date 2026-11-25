@@ -2,7 +2,7 @@
   const accessScript = document.currentScript.src;
   const demoRoles = ['cliente', 'vendedor', 'entregador', 'admin'];
   const labels = { cliente: 'Cliente', vendedor: 'Vendedor', entregador: 'Entregador', admin: 'Administrador' };
-  const destinations = {cliente:new Set(['catalogo','favoritos','carrinho','pedidos','conta','privacidade']),vendedor:new Set(['visao','produtos','pedidos','loja','estatisticas','financeiro','privacidade']),admin:new Set(['cadastros'])};
+  const destinations = {cliente:new Set(['catalogo','favoritos','carrinho','pedidos','conta','privacidade']),vendedor:new Set(['visao','produtos','pedidos','loja','estatisticas','financeiro','privacidade']),entregador:new Set(['privacidade']),admin:new Set(['cadastros'])};
   const allowedDestination = (role,section) => destinations[role]?.has(section) === true;
   const destinationKey = 'raiz_auth_destination_v1';
   function rememberDestination(role) {
@@ -22,8 +22,9 @@
   }
   const file = role => {
     if (role === 'admin') return 'admin/index.html?modo=online#cadastros';
-    const section = role === 'cliente' && window.RaizShopping?.intent() ? 'carrinho' : destination(role);
-    if (section === 'financeiro') return 'financeiro/index.html?modo=online&role=' + role;
+    const requested = destination(role);
+    const section = role === 'cliente' && requested !== 'privacidade' && window.RaizShopping?.intent() ? 'carrinho' : requested;
+    if (section === 'financeiro' && role === 'vendedor') return 'financeiro/index.html?modo=online&role=' + role;
     return role + '/index.html?modo=online' + (section ? '#' + section : '');
   };
   const login = role => {

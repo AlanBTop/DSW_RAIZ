@@ -592,7 +592,7 @@
             <span style="font-weight:400;font-size:0.75rem;color:var(--muted)">DDD + Número</span>
           </label>
           <div class="input-wrapper">
-            <input type="tel" id="inputTelefone" class="form-input" placeholder="(65) 99654-3210" maxlength="15" autocomplete="tel" />
+            <input type="tel" id="inputTelefone" class="form-input" placeholder="(65) 99654-3210" maxlength="19" autocomplete="tel" aria-describedby="telError" />
           </div>
           <div class="field-hint">Máscara automática: (XX) 9XXXX-XXXX</div>
           <div class="field-error" id="telError">Informe um telefone celular válido com DDD (ex: (65) 99654-3210).</div>
@@ -612,7 +612,7 @@
       <div class="form-group">
         <label class="form-label" for="inputSenha">
           <span>Senha</span>
-          <span id="passReqLabel" style="font-weight:400;font-size:0.75rem;color:var(--muted)">Mínimo 8 caracteres</span>
+          <span id="passReqLabel" hidden>Senha forte obrigatória</span>
         </label>
         <div class="input-wrapper">
           <input type="password" id="inputSenha" class="form-input" required placeholder="Digite sua senha" autocomplete="current-password" />
@@ -642,6 +642,7 @@
         </div>
 
         <div class="field-error" id="senhaError">A senha deve atender a todos os critérios de segurança acima.</div>
+        <a id="loginRecovery" class="login-recovery-link" href="recuperar-senha.html">Esqueci minha senha</a>
       </div>
 
       <!-- Confirmação de Senha (ativa no cadastro) -->
@@ -660,14 +661,16 @@
       </button>
     </form>
 
-    <div class="login-support-recovery"><a href="recuperar-senha.html">Esqueci minha senha</a></div>
-    <nav class="login-support-nav" aria-label="Documentos da RAIZ"><a href="privacidade.html">Privacidade</a><a href="termos.html">Termos de uso</a></nav>
-    <p class="login-account-removal"><a href="excluir-conta.html">Solicitar exclusão da conta</a></p>
     <p id="accessMessage" role="status" tabindex="-1"></p>
     <div class="mode-toggle">
       <span id="toggleText">Ainda não tem uma conta?</span>
       <button type="button" class="raiz-button" onclick="toggleAuthMode()" id="toggleLink">Cadastre-se</button>
     </div>
+    <nav class="login-support-links" aria-label="Privacidade e gestão da conta">
+      <a href="privacidade.html">Privacidade</a>
+      <a href="termos.html">Termos de uso</a>
+      <a href="excluir-conta.html">Solicitar exclusão da conta</a>
+    </nav>
 
     <!-- Atalhos Rápidos Demo (1 Clique para Teste Acadêmico) -->
     <div class="demo-box">
@@ -704,6 +707,6 @@
   <script src="config/web-access.js"></script>
 <script src="config/api-web.js"></script>
 
-  <script src="config/login.js"></script>
+  <script src="config/phone.js"></script><script src="config/login.js"></script>
 </body>
 </html>

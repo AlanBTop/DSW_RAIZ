@@ -14,7 +14,7 @@
   }
   function plan(amount,count,type) {
     if(!Number.isSafeInteger(amount) || amount<1) throw new Error('Total inválido.');
-    if(!Number.isInteger(count) || count<1 || count>3 || type!=='credit' && count!==1) throw new Error('Parcelamento inválido. Crédito permite 1 a 3 parcelas; demais formas são à vista.');
+    if(!Number.isInteger(count) || count<1 || count>RaizPayments.installmentLimit(amount,type)) throw new Error('Parcelamento indisponível nas regras do checkout.');
     return Array.from({length:count},(_,i)=>Math.floor(amount/count)+(i<amount%count?1:0));
   }
   function draft(order,method,count,now=Date.now()) {
@@ -89,13 +89,14 @@
       const shippingCents=cep.startsWith('782')?1590:cep.startsWith('78')?2490:3990;
       const totals=new Map();for(const i of items)totals.set(i.productId,(totals.get(i.productId)||0)+i.qty);
       for(const [id,qty] of totals)if(s.products.find(p=>p.id===id).stock<qty)throw new Error('Estoque total insuficiente.');
-      plan(subtotalCents+shippingCents,count,method.type);
+      const discountCents=RaizPayments.discountCents(subtotalCents,method.type);
+      const totalCents=subtotalCents+shippingCents-discountCents;
       let id=Date.now();while(s.orders.some(o=>o.id===id))id++;
       const store=read('store_info',{});
       const first=s.products.find(p=>p.id===items[0].productId);
       const order={id,checkoutRequestId:input.requestId,customer:input.customer || 'Cliente de exemplo',customerEmail:input.email || '',
         date:new Date().toLocaleString('pt-BR'),items,status:'Aguardando pagamento',step:0,
-        subtotal:subtotalCents/100,total:(subtotalCents+shippingCents)/100,shippingCents,cep,address:input.address.trim(),inventoryReserved:true,
+        subtotal:subtotalCents/100,total:totalCents/100,discountCents,shippingCents,cep,address:input.address.trim(),inventoryReserved:true,
         delivery:{id,distance:'Não calculada',value:shippingCents/100,pickup:[...new Set(items.map(i=>s.products.find(p=>p.id===i.productId).seller))].join(' / ') || store.name || 'Loja de exemplo',
           pickupAddress:store.address || 'Rua das Acácias, 45 • Cáceres - MT',drop:'Cliente de exemplo',dropAddress:input.address.trim(),
           item:first.name,productId:first.id,fragile:items.some(i=>s.products.find(p=>p.id===i.productId)?.fragile),size:first.size || '',note:'Pedido de demonstração. Não representa uma cobrança.'}};

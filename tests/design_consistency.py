@@ -45,14 +45,20 @@ try:
                     expect(page.locator('.raiz-feedback')).to_have_text('')
                 expect(page.locator('body > .site-header')).to_have_count(1)
                 expect(page.locator('body > .site-footer')).to_have_count(1)
-                expect(page.locator('#storeQuery')).to_be_visible()
+                compact_header = role in ('entregador', 'admin')
+                if compact_header:
+                    expect(page.locator('#storeQuery')).to_have_count(0)
+                else:
+                    expect(page.locator('#storeQuery')).to_be_visible()
                 metrics = page.locator('.site-header').evaluate('''el => {
                     const r = el.getBoundingClientRect(), brand = el.querySelector('.site-brand'), search = el.querySelector('.site-search');
                     return {height:r.height, brand:getComputedStyle(brand).fontFamily, size:getComputedStyle(brand).fontSize,
-                      searchHeight:search.getBoundingClientRect().height, color:getComputedStyle(brand).color};
+                      searchHeight:search?.getBoundingClientRect().height ?? null, color:getComputedStyle(brand).color};
                 }''')
                 if header_metrics is None: header_metrics = metrics
-                compared = ('brand','size','color','searchHeight') if role=='vendedor' else tuple(metrics)
+                compared = ('brand','size','color') if compact_header else (
+                    ('brand','size','color','searchHeight') if role=='vendedor' else tuple(metrics)
+                )
                 assert all(metrics[key]==header_metrics[key] for key in compared), (width,path,header_metrics,metrics)
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1'), (width, path)
                 if width in (390, 1440) and path in ('', 'cliente/index.html?modo=online', 'login.html'):

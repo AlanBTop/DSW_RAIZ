@@ -605,7 +605,9 @@
         await privacy();
         if(role==='entregador')RaizCourier.privacy(document.getElementById('privacidade'),{user,profile:courierProfile,logout:courierLogout});
         if(role==='vendedor')RaizSeller.privacy(document.getElementById('privacidade'),{user,store:sellerStore,logout:sellerLogout});
-        if(['vendedor','admin'].includes(role)) {
+        if(role==='admin') {
+          section('Vendas e pagamentos','financeiro');
+        } else if(role==='vendedor') {
           const finance = el('a','Vendas e pagamentos','nav-btn');
           finance.href = '../financeiro/index.html?modo=online&role=' + role;
           finance.dataset.section = 'financeiro';
@@ -700,6 +702,37 @@
       }
     }
     await load();
+    async function loadFinance(panel) {
+      if(panel.dataset.financeLoaded)return;
+      panel.dataset.financeLoaded='true';
+      const mount=el('div');
+      const feedback=el('p','Carregando vendas e pagamentos…');
+      feedback.setAttribute('role','status');
+      panel.append(feedback,mount);
+      try {
+        const response=await fetch('../financeiro/index.html');
+        if(!response.ok)throw new Error('Não foi possível carregar a central financeira.');
+        const template=new DOMParser().parseFromString(await response.text(),'text/html');
+        if(!panel.isConnected)return;
+        const root=mount.attachShadow({mode:'open'});
+        const styles=el('link');
+        styles.rel='stylesheet';
+        styles.href='../config/finance.css';
+        root.append(styles);
+        for(const id of ['app','detail','confirm','printReport'])root.append(template.getElementById(id));
+        root.getElementById('app').classList.add('fin-embedded');
+        await createFinance(root,true).boot(active,db);
+        feedback.remove();
+      } catch(error) {
+        mount.remove();
+        feedback.textContent=error.message || RaizApi.errorText(error);
+        feedback.append(button('Tentar novamente',()=>{
+          feedback.remove();
+          delete panel.dataset.financeLoaded;
+          loadFinance(panel);
+        }));
+      }
+    }
     function syncNavigation() {
       let current = role === 'cliente' && catalogState.favorites && ['#catalogo','#favoritos'].includes(location.hash)
         ? 'favoritos' : location.hash.slice(1) || sectionNav.querySelector('a')?.dataset.section;
@@ -710,6 +743,7 @@
         if(!['catalogo','favoritos','carrinho','pedidos','conta','privacidade'].includes(current))current='catalogo';
         RaizCustomer.show(content,current);
       }
+      if(role==='admin' && current==='financeiro')void loadFinance(document.getElementById('financeiro'));
       for (const link of [...sectionNav.querySelectorAll('a'), ...mobileNav.querySelectorAll('a')]) {
         const selected = link.dataset.section === current;
         link.classList.toggle('active', selected);

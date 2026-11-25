@@ -19,7 +19,10 @@
   <div class="market-wrap"><p id="storeStatus" class="store-status" role="status" aria-live="polite"></p></div>
   <main id="storeContent" class="market-wrap store-main">
     <section aria-labelledby="catalogTitle">
-      <div class="store-catalog-heading"><div><p class="store-eyebrow">MARKETPLACE RAIZ</p><h1 id="catalogTitle">Encontre seu próximo verde.</h1><p>Plantas, vasos e tudo para cultivar, de quem entende de cuidado.</p></div><div class="store-filters"><label>Categoria<select id="storeCategory"><option value="">Todas</option><option value="plantas">Plantas</option><option value="vasos">Vasos</option><option value="insumos">Insumos</option><option value="ferramentas">Ferramentas</option></select></label><label>Ordenar por<select id="storeOrder"><option value="recentes">Mais recentes</option><option value="menor-preco">Menor preço</option><option value="maior-preco">Maior preço</option></select></label></div></div>
+      <div class="store-catalog-heading">
+        <div class="store-catalog-intro"><h1 id="catalogTitle">Encontre seu próximo verde.</h1><p>Explore plantas, vasos e tudo para cultivar.</p><a class="store-hero-link" href="#storeHighlightControls">Explorar destaques</a></div>
+        <div class="store-filters"><label>Categoria<select id="storeCategory"><option value="">Todas</option><option value="plantas">Plantas</option><option value="vasos">Vasos</option><option value="insumos">Insumos</option><option value="ferramentas">Ferramentas</option></select></label><label>Ordenar por<select id="storeOrder"><option value="recentes">Mais recentes</option><option value="menor-preco">Menor preço</option><option value="maior-preco">Maior preço</option></select></label></div>
+      </div>
       <div id="storeHighlightControls" class="store-rail-heading" hidden><h2>Produtos em destaque</h2><div class="store-rail-buttons"><button id="storeHighlightPrev" class="store-outline" type="button" aria-label="Produtos anteriores em destaque">←</button><button id="storeHighlightNext" class="store-outline" type="button" aria-label="Próximos produtos em destaque">→</button></div></div>
       <div id="storeProducts" class="store-products" aria-busy="true"></div>
       <nav id="storePagination" class="store-pagination" aria-label="Páginas de produtos"></nav>

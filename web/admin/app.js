@@ -479,7 +479,39 @@ function renderPage() {
         </div>
       </div>
     `;
-    if(['local','apresentacao'].includes(RaizPresentation.source)) c.insertAdjacentHTML('beforeend',RaizPaymentFlow.panel());
+    if(['local','apresentacao'].includes(RaizPresentation.source)) {
+      c.insertAdjacentHTML('beforeend',RaizPaymentFlow.panel());
+      const rules=RaizPayments.checkoutRules();
+      c.insertAdjacentHTML('beforeend',`
+        <form id="demoCheckoutRules" class="card payment-settings">
+          <h3>Regras do checkout acadêmico</h3>
+          <p>As condições são aplicadas a novas compras nesta fonte de apresentação.</p>
+          <fieldset><legend>Formas de pagamento aceitas</legend>
+            ${Object.entries(RaizPayments.TYPES).map(([type,label])=>`<label class="field"><input type="checkbox" name="method" value="${type}" ${rules.methods.includes(type)?'checked':''}> ${label}</label>`).join('')}
+          </fieldset>
+          <label class="field">Máximo de parcelas sem juros<input class="input" name="limit" type="number" min="1" max="12" value="${rules.maxInstallments}" required></label>
+          <label class="field">Valor mínimo por parcela (R$)<input class="input" name="minimum" type="number" min="0" step="0.01" value="${rules.minimumCents/100}" required></label>
+          <label class="field">Desconto Pix sobre os produtos (%)<input class="input" name="discount" type="number" min="0" max="100" step="0.01" value="${rules.pixDiscountBps/100}" required></label>
+          <button type="submit" class="btn btn-primary">Salvar regras</button>
+          <p role="status" class="small"></p>
+        </form>`);
+      const form=c.querySelector('#demoCheckoutRules');
+      form.onsubmit=event=>{
+        event.preventDefault();
+        const data=new FormData(form);
+        const feedback=form.querySelector('[role=status]');
+        try {
+          RaizPayments.saveCheckoutRules({
+            methods:data.getAll('method'),maxInstallments:Number(data.get('limit')),
+            minimumCents:Math.round(Number(data.get('minimum'))*100),
+            pixDiscountBps:Math.round(Number(data.get('discount'))*100)
+          });
+          feedback.textContent='Regras salvas para o checkout acadêmico.';
+        } catch(error) {
+          feedback.textContent=error.message;
+        }
+      };
+    }
     return;
   }
 

@@ -1,6 +1,8 @@
-(() => {
-  'use strict';
-  const $=id=>document.getElementById(id);
+'use strict';
+
+function createFinance(root = document, embedded = false) {
+  const $=id=>root.getElementById(id);
+  let currentModule='pedidos';
   const money=value=>Number.isFinite(value)?value.toLocaleString('pt-BR',{style:'currency',currency:'BRL'}):'Não disponível';
   const date=value=>{const d=value?new Date(value):null;return d&&!Number.isNaN(d.getTime())?d:null;};
   const stamp=value=>date(value)?.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})||'Data não disponível';
@@ -88,7 +90,12 @@
   }
   function print(list) {
     const report=$('printReport');report.replaceChildren(el('h1','Vendas e pagamentos · RAIZ'),el('p','Pagamentos simulados. Sem movimentação de dinheiro.'),el('p','Período: '+(filters.from||'Início')+' a '+(filters.to||'Hoje')+' · Gerado em '+new Date().toLocaleString('pt-BR')),el('p','Até 100 pagamentos recentes. Taxas, líquido e repasses não estão integrados.'));
-    const data=exportRows(list);report.append(table(data[5],data.slice(6),'Relatório de pagamentos'));window.print();
+    const data=exportRows(list);report.append(table(data[5],data.slice(6),'Relatório de pagamentos'));
+    if(!embedded){window.print();return;}
+    const printable=report.cloneNode(true);
+    document.body.append(printable);
+    window.addEventListener('afterprint',()=>printable.remove(),{once:true});
+    window.print();
   }
   function settlement() {
     const target=$('settlement');target.replaceChildren();
@@ -103,9 +110,13 @@
     const actions=el('div',null,'fin-actions');for(const [label,fn] of [['↓ CSV',()=>RaizFinanceExport.csv(exportRows(list))],['↓ Excel (.xlsx)',()=>RaizFinanceExport.excel(exportRows(list))],['PDF / imprimir',()=>print(list)]]){const b=button(label,fn);b.disabled=!list.length;actions.append(b);}report.append(actions);target.append(report);
     if(!list.length){target.append(empty('Nenhuma transação nesta seleção','Ajuste os filtros ou aguarde um novo pedido.'));return;}
     // O detalhe acompanha o filtro inteiro, com a mesma paginação dos pedidos.
-    const transactionRows=list.slice(0,15);
+    const transactionRows=list.filter(o=>o.payment).slice(0,15);
+    if(!transactionRows.length){
+      target.append(empty('Nenhum pagamento retornado','Os pedidos selecionados continuam disponíveis no relatório.'));
+      return;
+    }
     target.append(table(['Pedido','Bruto do pagamento','Taxa','Antecipação','Líquido','Recebimento'],transactionRows.map(o=>['#'+o.id,o.payment?money(Number(o.payment.valor_centavos)/100):'Não disponível','Não disponível','Não disponível','Não disponível','Sem integração']),'Conciliação por transação'));
-    if(list.length>15)target.append(el('p','Prévia de até 15 transações. As exportações incluem todos os '+list.length+' pedidos filtrados.','fin-muted'));
+    if(list.length>transactionRows.length)target.append(el('p','A tabela mostra até 15 pagamentos registrados. As exportações incluem todos os '+list.length+' pedidos filtrados.','fin-muted'));
   }
   function security() {
     const target=$('security');target.replaceChildren();
@@ -125,6 +136,7 @@
       RaizApi.all(db,active.role==='vendedor'?'vendedor_pedidos':'cliente_pedidos','*'),
       RaizApi.rpc(db,'pagamentos')
     ]);
+    if($('app').hidden)return;
     orders=result[0].status==='fulfilled'?[...result[0].value].reverse():[];orderError=result[0].status==='rejected'?result[0].reason:null;
     payments=result[1].status==='fulfilled'&&Array.isArray(result[1].value)?result[1].value:[];
     paymentError=result[1].status==='rejected'?result[1].reason:result[1].value!==null&&!Array.isArray(result[1].value)?{code:'INVALID_RESPONSE'}:null;
@@ -133,9 +145,9 @@
     $('feedback').textContent=orderError?'Falha ao carregar pedidos. Tente novamente.':payState!=='ready'?'Pedidos carregados. Pagamentos indisponíveis; nenhum valor financeiro foi estimado.':'Dados atualizados às '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+'.';
   }
   function navigate(focus=false) {
-    const modules=['pedidos','meios','repasses','seguranca'],selected=modules.includes(location.hash.slice(1))?location.hash.slice(1):'pedidos';
+    const modules=['pedidos','meios','repasses','seguranca'],requested=embedded?currentModule:location.hash.slice(1),selected=modules.includes(requested)?requested:'pedidos';
     for(const id of modules)$(id).hidden=id!==selected;
-    document.querySelectorAll('[data-module]').forEach(a=>{if(a.dataset.module===selected)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
+    root.querySelectorAll('[data-module]').forEach(a=>{if(a.dataset.module===selected)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
     $('filters').hidden=selected==='meios';
     if(focus){const heading=$(selected).querySelector('h2');heading.tabIndex=-1;heading.focus({preventScroll:true});}
   }
@@ -144,23 +156,78 @@
     let n=limit,part=0;
     for(;n>=1;n--){part=rate?price*rate/(1-Math.pow(1+rate,-n)):price/n;if(part>=minimum||n===1)break;}
     const total=Math.round(part*100)*n/100;
-    $('preview').textContent=n+'× de '+money(Math.round(part*100)/100)+' · Total aproximado: '+money(total)+'. Pix com desconto: '+money(Math.round(price*(1-Number($('discount').value)/100)*100)/100)+'.'+(part<minimum?' O preço é inferior ao mínimo por parcela.':'')+' Prévia de planejamento; diferenças de centavos são ajustadas pelo provedor.';
+    const credit=$('method-credit').checked?n+'× de '+money(Math.round(part*100)/100)+' · Total aproximado: '+money(total)+'.'+(part<minimum?' O preço é inferior ao mínimo por parcela.':''):'Crédito desativado na prévia.';
+    const pix=$('method-pix').checked?'Pix com desconto: '+money(Math.round(price*(1-Number($('discount').value)/100)*100)/100)+'.':'Pix desativado na prévia.';
+    $('preview').textContent=credit+' '+pix+' Prévia de planejamento.';
   }
-  async function boot() {
+  function setupMethods() {
+    const admin=active.role==='admin';
+    if(admin)$('methodsHelp').textContent='Marque os meios para comparar uma configuração. As alterações valem apenas para esta prévia.';
+    for(const [method,label] of Object.entries(methods)){
+      const item=el('div',null,'fin-method'),field=el('label',label),toggle=el('input'),status=el('small','Disponível no simulador');
+      toggle.id='method-'+method;
+      toggle.type='checkbox';
+      toggle.checked=true;
+      toggle.disabled=!admin;
+      if(admin){
+        status.textContent='Ativo na prévia';
+        toggle.onchange=()=>{
+          status.textContent=toggle.checked?'Ativo na prévia':'Desativado na prévia';
+          if($('calculator').checkValidity())calculator();
+        };
+      }
+      field.append(toggle);
+      item.append(field,status);
+      $('methods').append(item);
+    }
+    $('calculator').onsubmit=e=>{e.preventDefault();calculator();};
+    calculator();
+  }
+  function setupSettlementPlanner() {
+    $('settlementPlanner').hidden=false;
+    $('approvalDate').value=day(new Date());
+    $('settlementCalculator').onsubmit=e=>{
+      e.preventDefault();
+      const gross=Math.round(Number($('grossAmount').value)*100);
+      const fee=Math.round(gross*Number($('transactionRate').value)/100);
+      const advance=Math.round((gross-fee)*Number($('advanceRate').value)/100);
+      const available=new Date($('approvalDate').value+'T12:00:00');
+      available.setDate(available.getDate()+Number($('settlementDays').value));
+      const output=$('settlementPreview');
+      output.hidden=false;
+      output.textContent='Tarifa: '+money(fee/100)+' · Antecipação: '+money(advance/100)+' · Líquido simulado: '+money((gross-fee-advance)/100)+' · Disponibilidade simulada: '+available.toLocaleDateString('pt-BR');
+    };
+  }
+  async function boot(profile, client) {
     try {
+      if(embedded){
+        active=profile;
+        db=client;
+        $('scope').textContent='ADMINISTRAÇÃO · TODAS AS LOJAS';
+        root.querySelectorAll('[data-module]').forEach(link=>link.onclick=event=>{
+          event.preventDefault();
+          currentModule=link.dataset.module;
+          navigate(true);
+        });
+      }else{
       active=await RaizAccess.session();const requested=new URLSearchParams(location.search).get('role')==='admin'?'admin':'vendedor';
       if(!active){location.replace('../login.html?modo=online&role='+requested+'&destino=financeiro');return;}
       if(!['admin','vendedor'].includes(active.role)){$('gate').replaceChildren(el('h1','Acesso restrito'),el('p','Esta área está disponível para administradores e vendedores aprovados.'));const a=el('a','Voltar à minha área');a.href='../'+active.role+'/index.html?modo=online';$('gate').append(a);return;}
       db=RaizAccess.client();$('back').href='../'+active.role+'/index.html?modo=online';$('back').textContent=active.role==='admin'?'Painel administrativo':'Minha loja';$('scope').textContent=active.role==='admin'?'ADMINISTRAÇÃO · TODAS AS LOJAS':'PAINEL DO VENDEDOR · SUA LOJA';
-      $('gate').hidden=true;$('app').hidden=false;navigate();
+      $('gate').hidden=true;
       db.auth.onAuthStateChange(event=>{if(['SIGNED_OUT','USER_DELETED'].includes(event)){$('app').hidden=true;$('detail').close();$('confirm').close();orders=[];payments=[];location.replace('../login.html?modo=online&role='+active.role+'&destino=financeiro');}});
+      window.addEventListener('hashchange',()=>navigate(true));
+      }
+      $('app').hidden=false;navigate();
       $('refresh').onclick=()=>{if(!busy)load();};
       $('filterForm').onsubmit=e=>{e.preventDefault();if($('from').value&&$('to').value&&$('from').value>$('to').value){$('feedback').textContent='A data inicial deve ser anterior à final.';return;}if($('min').value!==''&&$('max').value!==''&&Number($('min').value)>Number($('max').value)){$('feedback').textContent='O valor mínimo deve ser menor ou igual ao máximo.';return;}for(const key of Object.keys(filters))filters[key]=$(key).value;page=0;render();$('feedback').textContent='Filtros aplicados: '+filtered().length+' pedidos.';};
       $('clear').onclick=()=>{$('filterForm').reset();for(const key of Object.keys(filters))filters[key]='';page=0;render();$('feedback').textContent='Filtros removidos.';};
-      window.addEventListener('hashchange',()=>navigate(true));
-      for(const label of Object.values(methods)){const c=el('div',null,'fin-method'),l=el('label',label),toggle=el('input');toggle.type='checkbox';toggle.checked=true;toggle.disabled=true;toggle.setAttribute('aria-label',label+' disponível no simulador');l.append(toggle);c.append(l,el('small','Disponível no simulador'));$('methods').append(c);}
-      $('calculator').onsubmit=e=>{e.preventDefault();calculator();};calculator();await load();
-    } catch(error){$('app').hidden=true;$('gate').hidden=false;$('gate').replaceChildren(el('h1','Não foi possível abrir o painel'),el('p',error instanceof Error?error.message:RaizApi.errorText(error)),button('Tentar novamente',()=>location.reload()));}
+      setupMethods();
+      if(active.role==='admin')setupSettlementPlanner();
+      await load();
+    } catch(error){if(embedded)throw error;$('app').hidden=true;$('gate').hidden=false;$('gate').replaceChildren(el('h1','Não foi possível abrir o painel'),el('p',error instanceof Error?error.message:RaizApi.errorText(error)),button('Tentar novamente',()=>location.reload()));}
   }
-  boot();
-})();
+  return {boot};
+}
+
+if(document.getElementById('gate') && document.getElementById('settlement'))createFinance().boot();

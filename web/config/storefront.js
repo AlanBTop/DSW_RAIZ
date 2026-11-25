@@ -15,7 +15,21 @@
   function announce(text,error=false){status.textContent=text;status.classList.toggle('store-error',error);}
   function url(path,query={}){const u=new URL(path,location.href);for(const [k,v]of Object.entries(query))if(v!==''&&v!==undefined)u.searchParams.set(k,v);return u.pathname+u.search;}
   function categoryUrl(category){return url('index.html',{categoria:category});}
-  function art(product,large=false){const e=node('div',undefined,'store-art'+(large?' store-art-large':''));if(pageType==='catalog')e.textContent=product.emoji||icons[product.categoria]||'🌿';else {const img=node('img');img.src='assets/catalog-'+(labels[product.categoria]?product.categoria:'plantas')+'.svg';img.alt='';img.width=320;img.height=260;e.append(img);}e.dataset.category=product.categoria;e.setAttribute('aria-hidden','true');return e;}
+  function art(product,large=false,illustrated=false){
+    const artwork=node('div',undefined,'store-art'+(large?' store-art-large':''));
+    if(pageType==='catalog'&&!illustrated){
+      artwork.textContent=product.emoji||icons[product.categoria]||'🌿';
+    } else {
+      const category=Object.hasOwn(labels,product.categoria)?product.categoria:'plantas';
+      const image=node('img');image.src='assets/catalog-'+category+'.svg';image.alt='';
+      image.width=320;image.height=260;
+      if(illustrated)image.loading='lazy';
+      artwork.append(image);
+    }
+    artwork.dataset.category=product.categoria;
+    artwork.setAttribute('aria-hidden','true');
+    return artwork;
+  }
   function count(){const total=RaizShopping.cart().reduce((sum,r)=>sum+r.quantity,0);document.getElementById('storeCartCount').textContent=String(total);}
   RaizShell.mount();
   count();window.addEventListener('raiz-cart-updated',count);window.addEventListener('storage',count);
@@ -32,9 +46,10 @@
       location.href=user?'cliente/index.html?modo=online#carrinho':'login.html?role=cliente&modo=online';
     }catch(error){announce(error.message||'Não foi possível continuar. Tente novamente.',true);}
   }
-  function productCard(product){
+  function productCard(product,illustrated=false){
     const card=node('article',undefined,'store-product');const target=url('produto.html',{id:product.id});
-    const picture=link('',target,'store-picture');picture.setAttribute('aria-label','Ver '+product.nome);picture.append(art(product));
+    const picture=link('',target,'store-picture');picture.setAttribute('aria-label','Ver '+product.nome);
+    picture.append(art(product,false,illustrated));
     const body=node('div',undefined,'store-product-body');
     body.append(node('p',labels[product.categoria]||product.categoria,'store-eyebrow'),link(product.nome,target,'store-product-name'),node('p',product.vendedor_nome,'store-seller'),node('strong',money.format(product.preco),'store-price'));
     body.append(node('span',product.estoque>0?'Disponível':'Sem estoque','store-availability'));
@@ -59,19 +74,24 @@
     const sections=Object.entries(labels).map(([category,label])=>{
       const section=node('section',undefined,'store-category-section'),head=node('div',undefined,'store-rail-heading');
       const title=node('h2',label);title.id='storeCategoryTitle-'+category;
-      section.setAttribute('aria-labelledby',title.id);head.append(title,link('Ver todos',categoryUrl(category),'store-detail-link'));
+      section.setAttribute('aria-labelledby',title.id);
+      const browse=link('Ver todos',categoryUrl(category),'store-detail-link');
+      browse.setAttribute('aria-label','Ver todos os produtos de '+label);
       const rail=node('div',undefined,'store-products');rail.id='storeRail-'+category;
       const controls=node('div',undefined,'store-rail-buttons');
       const previous=button('←',()=>{},'store-outline'),next=button('→',()=>{},'store-outline');
-      previous.setAttribute('aria-label','Produtos anteriores de '+label);next.setAttribute('aria-label','Próximos produtos de '+label);controls.append(previous,next);
-      const hint=node('p','Carregando produtos…','store-muted');section.append(head,rail,hint,controls);host.append(section);
-      return {category,label,rail,previous,next,hint};
+      previous.setAttribute('aria-label','Produtos anteriores de '+label);next.setAttribute('aria-label','Próximos produtos de '+label);
+      controls.append(browse,previous,next);head.append(title,controls);
+      const hint=node('p','Carregando produtos…','store-muted');section.append(head,rail,hint);host.append(section);
+      return {category,label,section,rail,previous,next,hint};
     });
-    await Promise.all(sections.map(async({category,label,rail,previous,next,hint})=>{
+    await Promise.all(sections.map(async({category,label,section,rail,previous,next,hint})=>{
       try {
         const result=await RaizApi.page(db,'cliente_produtos',COLUMNS,{page:0,active:true,publicCatalog:true,category,order:'id',ascending:false});
         if(current!==ticket)return;
-        rail.replaceChildren(...result.rows.map(productCard));hint.textContent=result.total?result.total+' produto(s) nesta categoria.':'Novos produtos em breve.';
+        if(!result.rows.length){section.remove();return;}
+        rail.replaceChildren(...result.rows.map(product=>productCard(product,true)));
+        hint.remove();
         carousel(rail,previous,next,label);
       }catch(_){hint.textContent='Não foi possível carregar esta categoria. Use a busca para tentar novamente.';previous.disabled=next.disabled=true;}
     }));
@@ -81,11 +101,12 @@
     const search=(params.get('busca')||'').slice(0,120);const category=Object.hasOwn(labels,params.get('categoria'))?params.get('categoria'):'';
     const order=['recentes','menor-preco','maior-preco'].includes(params.get('ordem'))?params.get('ordem'):'recentes';const page=Math.max(0,Math.min(999,Math.floor(Number(params.get('pagina'))||0)));
     const home=!search&&!category&&!params.has('catalogo')&&!params.has('pagina')&&!params.has('ordem');
+    main.classList.toggle('store-library',home);
     document.getElementById('storeCategory').value=category;document.getElementById('storeOrder').value=order;
     document.getElementById('catalogTitle').textContent=search?'Resultados para “'+search+'”':category?labels[category]:'Encontre seu próximo verde.';
     const result=await RaizApi.page(db,'cliente_produtos',COLUMNS,{page,active:true,publicCatalog:true,category,search,searchColumns:['nome','vendedor_nome'],order:order==='recentes'?'id':'preco',ascending:order==='menor-preco'});
     if(current!==ticket)return;
-    grid.replaceChildren(...result.rows.map(productCard));grid.setAttribute('aria-busy','false');
+    grid.replaceChildren(...result.rows.map(product=>productCard(product,home)));grid.setAttribute('aria-busy','false');
     if(!result.rows.length)grid.append(node('p','Nenhum produto encontrado. Experimente outra busca ou categoria.','store-empty'));
     announce(result.total+' produto(s) encontrado(s).');
     const pages=Math.max(1,Math.ceil(result.total/RaizApi.PAGE));const pager=document.getElementById('storePagination');pager.replaceChildren();
@@ -162,7 +183,7 @@
     filters.append(select('Categoria',category,[['','Todas'],...shopProfile.categories.map(c=>[c.category,c.label])],'categoria'),select('Ordenar por',order,[['recentes','Mais recentes'],['menor-preco','Menor preço'],['maior-preco','Maior preço']],'ordem'));heading.append(headingCopy,filters);
     const form=node('form',undefined,'shop-profile-search');form.setAttribute('role','search');const label=node('label','Buscar nesta loja');label.htmlFor='shopQuery';const input=node('input');input.id='shopQuery';input.type='search';input.maxLength=120;input.placeholder='Qual produto você procura?';input.value=search;
     const searchButton=node('button','Buscar','raiz-button');searchButton.type='submit';form.append(label,input,searchButton);form.onsubmit=e=>{e.preventDefault();change('busca',input.value.trim());};
-    const grid=node('div',undefined,'store-products');grid.id='shopProducts';grid.append(...result.rows.map(productCard));if(!result.rows.length)grid.append(node('p','Nenhum produto nesta seleção. Experimente outra busca ou categoria.','store-empty'));
+    const grid=node('div',undefined,'store-products');grid.id='shopProducts';grid.append(...result.rows.map(product=>productCard(product)));if(!result.rows.length)grid.append(node('p','Nenhum produto nesta seleção. Experimente outra busca ou categoria.','store-empty'));
     const pager=node('nav',undefined,'store-pagination');pager.setAttribute('aria-label','Páginas dos produtos da loja');const pages=Math.max(1,Math.ceil(result.total/RaizApi.PAGE));
     function move(next){params.set('pagina',next);history.replaceState(null,'','?'+params+'#produtos');shop().catch(fail);}
     const prev=button('Anterior',()=>move(page-1),'store-outline');prev.disabled=page===0;const next=button('Próxima',()=>move(page+1),'store-outline');next.disabled=page+1>=pages;pager.append(prev,node('span','Página '+(page+1)+' de '+pages),next);

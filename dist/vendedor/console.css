@@ -17,7 +17,7 @@
 .seller-console .sidebar-foot .hub-tag { display:none; }
 .seller-console .sidebar-about { font-size:13px; }
 .seller-console .topbar { position:static;min-height:100px;padding:22px 30px;gap:20px; }
-.seller-console .topbar h1 { font:650 25px/1.25 var(--raiz-font);margin:0;letter-spacing:-.6px; }
+.seller-console .topbar h1 { font:650 25px/1.25 var(--raiz-font);margin:0;letter-spacing:normal; }
 .seller-console .topbar .tiny { font-size:13px;margin-top:7px;color:#7b8872; }
 .seller-console .top-actions { gap:10px; }
 .seller-console .top-actions .raiz-button { margin:0;min-height:42px;font-size:13px;text-align:center;background:white;color:#48643c;border:1px solid #d6e0ce; }
@@ -27,7 +27,7 @@
 .seller-console .raiz-content { display:block; }
 .seller-console .raiz-content > section { margin:0;padding:0;background:transparent;border:0;border-radius:0; }
 .seller-console .raiz-content > section[hidden] { display:none!important; }
-.seller-console .raiz-content > section > h2 { font-size:21px;letter-spacing:-.4px;font-weight:650;margin:0 0 9px; }
+.seller-console .raiz-content > section > h2 { font-size:21px;letter-spacing:normal;font-weight:650;margin:0 0 9px; }
 .seller-console .seller-lead { font-size:14px;color:#6f7d64;line-height:1.7;margin:0 0 24px; }
 .seller-console .raiz-feedback:empty { display:none; }
 .seller-console .raiz-feedback:not(:empty) { margin:0 0 20px;padding:14px 18px;border:1px solid #ccdcbc;background:#eaf3e2;border-radius:8px;font-size:14px; }
