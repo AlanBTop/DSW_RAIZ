@@ -2,8 +2,6 @@
 
 # RAIZ Web
 
-## Acesso ao sistema
-
 🌐 **Acesse a versão web:** [DSW_RAIZ – RAIZ Web](https://dsw-raiz.onrender.com)
 
 Aplicação hospedada no Render, com acesso às funcionalidades destinadas a clientes, vendedores, entregadores e administradores.
