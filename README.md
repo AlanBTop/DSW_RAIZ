@@ -2,6 +2,12 @@
 
 # RAIZ Web
 
+## Acesso ao sistema
+
+🌐 **Acesse a versão web:** [DSW_RAIZ – RAIZ Web](https://dsw-raiz.onrender.com)
+
+Aplicação hospedada no Render, com acesso às funcionalidades destinadas a clientes, vendedores, entregadores e administradores.
+
 Fonte compartilhada em `web/`, pacote gerado em `dist/` e deploy automático da branch `main` no [Render](https://dsw-raiz.onrender.com). Para atualizar a partir da cópia local e conferir os arquivos publicados, siga [EMPARELHAMENTO.md](docs/EMPARELHAMENTO.md).
 
 Versão web autenticada para cliente, vendedor, entregador e administrador. Backend compartilhado em Supabase; os aplicativos mobile podem usar o mesmo contrato sem um segundo backend.
